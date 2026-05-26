@@ -1,10 +1,14 @@
-// import { userService } from '@/services/userService'
 import { userService } from '../services/userService'
+import { setCorsHeaders } from './_cors'
 
 export default async function handler(req: any, res: any) {
+  // ADD THIS
+  setCorsHeaders(res)
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
+
   if (req.method === 'GET') {
     const users = await userService.getUsers()
     return res.status(200).json(users)
