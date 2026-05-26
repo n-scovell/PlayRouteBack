@@ -1,7 +1,10 @@
 // import { userService } from '@/services/userService'
 import { userService } from '../services/userService'
 
-export default async function handler(req, res) {
+export default async function handler(req: any, res: any) {
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
   if (req.method === 'GET') {
     const users = await userService.getUsers()
     return res.status(200).json(users)
