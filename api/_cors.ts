@@ -1,7 +1,8 @@
 export function setCorsHeaders(res: any) {
   res.setHeader(
     'Access-Control-Allow-Origin',
-    'https://play-routes-front.vercel.app/'
+    'http://localhost:5173',
+    'https://your-app.vercel.app'
   )
 
   res.setHeader(
