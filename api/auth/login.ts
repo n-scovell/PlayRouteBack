@@ -67,7 +67,26 @@
 //   }
 // }
 
+// import { setCorsHeaders } from '../_cors'
+
+// export default async function handler(req: any, res: any) {
+//   setCorsHeaders(res)
+
+//   if (req.method === 'OPTIONS') {
+//     return res.status(200).end()
+//   }
+
+//   return res.status(200).json({
+//     message: 'login route works'
+//   })
+// }
+
+import { userService } from '../../services/userService'
 import { setCorsHeaders } from '../_cors'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET!
 
 export default async function handler(req: any, res: any) {
   setCorsHeaders(res)
@@ -76,7 +95,14 @@ export default async function handler(req: any, res: any) {
     return res.status(200).end()
   }
 
-  return res.status(200).json({
-    message: 'login route works'
-  })
+  try {
+    return res.status(200).json({
+      body: req.body,
+      jwtExists: !!JWT_SECRET
+    })
+  } catch (err: any) {
+    return res.status(500).json({
+      error: err.message
+    })
+  }
 }
