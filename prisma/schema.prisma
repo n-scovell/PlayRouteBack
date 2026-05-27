@@ -32,6 +32,16 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  payload   Json
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model Play {
   id          String   @id @default(cuid())
   title       String
