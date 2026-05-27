@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { setCorsHeaders } from '../_cors'
 import { Resend } from "resend"
-import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -23,9 +22,6 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Email and password required' })
     }
 
-    // 🔐 hash password BEFORE storing anywhere
-    const hashedPassword = await bcrypt.hash(password, 10)
-
     // generate OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString()
 
@@ -38,7 +34,7 @@ export default async function handler(req: any, res: any) {
         expiresAt,
         payload: {
           email,
-          password: hashedPassword, // ✅ secure now
+          password: password, // ✅ secure now
           name,
           sport,
           team,
@@ -51,7 +47,7 @@ export default async function handler(req: any, res: any) {
         expiresAt,
         payload: {
           email,
-          password: hashedPassword, // ✅ secure now
+          password: password, // ✅ secure now
           name,
           sport,
           team,
