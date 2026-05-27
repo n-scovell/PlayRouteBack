@@ -65,7 +65,28 @@ export default async function handler(req: any, res: any) {
       from: "PlayRoutes <onboarding@resend.dev>",
       to: email,
       subject: "Your verification code",
-      html: `<p>Your code is <b>${code}</b></p>`,
+      html: `
+  <div style="font-family: Arial, sans-serif; padding: 20px;">
+    <h2 style="color: #111;">Verify your account</h2>
+    <p>Your verification code is:</p>
+
+    <div style="
+      font-size: 28px;
+      letter-spacing: 4px;
+      font-weight: bold;
+      padding: 12px;
+      background: #f4f4f4;
+      display: inline-block;
+      border-radius: 8px;
+    ">
+      ${code}
+    </div>
+
+    <p style="margin-top: 20px; color: #666;">
+      This code expires in 10 minutes.
+    </p>
+  </div>
+`,
     })
 
     return res.status(200).json({
