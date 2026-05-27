@@ -73,10 +73,11 @@ export default async function handler(req: any, res: any) {
       message: 'Verification code sent',
     })
 
-  } catch (err) {
-    console.error(err)
+  } catch (err: any) {
+    console.error("REQUEST-VERIFICATION ERROR:", err)
     return res.status(500).json({
       error: 'Server error',
+      details: err.message,
     })
   }
 }
