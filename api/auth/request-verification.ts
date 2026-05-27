@@ -75,7 +75,6 @@ export default async function handler(req: any, res: any) {
 
   } catch (err) {
     console.error(err)
-
     return res.status(500).json({
       error: 'Server error',
     })
