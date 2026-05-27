@@ -1,16 +1,17 @@
 import { PrismaClient } from '@prisma/client'
 import { setCorsHeaders } from '../_cors'
-
-const code = Math.floor(100000 + Math.random() * 900000).toString()
-
+import { Resend } from "resend"
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 export default async function handler(req: any, res: any) {
   setCorsHeaders(res)
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -22,10 +23,14 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Email and password required' })
     }
 
-    // 2. expiry (10 minutes)
+    // 🔐 hash password BEFORE storing anywhere
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // generate OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
-    // 3. store verification record (overwrite if exists)
     await prisma.emailVerification.upsert({
       where: { email },
       update: {
@@ -33,7 +38,7 @@ export default async function handler(req: any, res: any) {
         expiresAt,
         payload: {
           email,
-          password, // IMPORTANT: hash later (we’ll fix this next step)
+          password: hashedPassword, // ✅ secure now
           name,
           sport,
           team,
@@ -46,7 +51,7 @@ export default async function handler(req: any, res: any) {
         expiresAt,
         payload: {
           email,
-          password,
+          password: hashedPassword, // ✅ secure now
           name,
           sport,
           team,
@@ -54,18 +59,25 @@ export default async function handler(req: any, res: any) {
       },
     })
 
-    // 4. send email (stub for now)
-    console.log(`Verification code for ${email}: ${code}`)
+    const resend = new Resend(process.env.RESEND_API_KEY)
 
-    // later replace with Resend:
-    // await resend.emails.send({...})
+    await resend.emails.send({
+      from: "PlayRoutes <onboarding@resend.dev>",
+      to: email,
+      subject: "Your verification code",
+      html: `<p>Your code is <b>${code}</b></p>`,
+    })
 
     return res.status(200).json({
       success: true,
       message: 'Verification code sent',
     })
+
   } catch (err) {
     console.error(err)
-    return res.status(500).json({ error: 'Server error' })
+
+    return res.status(500).json({
+      error: 'Server error',
+    })
   }
 }
