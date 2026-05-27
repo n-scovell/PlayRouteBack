@@ -58,7 +58,7 @@ export default async function handler(req: any, res: any) {
     const resend = new Resend(process.env.RESEND_API_KEY)
 
     await resend.emails.send({
-      from: "Nathan Scovell <n8scovell@gmail.com>",
+      from: "PlayRoutes <onboarding@resend.dev>",
       to: email,
       subject: "Your verification code",
       html: `
