@@ -12,7 +12,7 @@ export function setCorsHeaders(res: any) {
 
   res.setHeader(
     'Access-Control-Allow-Methods',
-    'GET,POST,DELETE,PATCH,OPTIONS'
+    'GET,POST,DELETE,PATCH,PUT,OPTIONS'
   )
 
   res.setHeader(
