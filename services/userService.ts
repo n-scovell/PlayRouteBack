@@ -7,7 +7,7 @@ export const userService = {
     password: string
     name?: string
     sport?: string
-    team?: string
+    team?: string 
   }) {
 
     // 🔐 Hash password before saving
@@ -19,6 +19,26 @@ export const userService = {
         password: hashedPassword,
       },
     })
+  },
+
+  async updateUser(
+    id: string,
+    data: {
+      password?: string
+      name?: string
+      sport?: string
+      team?: string
+    }) {
+      const updateData = { ...data }
+
+      if (updateData.password) {
+        updateData.password = await bcrypt.hash(updateData.password, 10)
+      }
+
+      return prisma.user.update({
+        where: { id },
+        data: updateData,
+      })
   },
 
   async getUsers() {
