@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,23 +8,19 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  sport     String?
-  team      String?
-
-  plays     Play[]
-  roster    Player[]
-  formations Formation[]
-
-  favorites FavoritePlay[]
-
+  id          String         @id @default(cuid())
+  email       String         @unique
+  password    String
+  name        String?
+  sport       String?
+  team        String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  favorites   FavoritePlay[]
+  formations  Formation[]
+  plays       Play[]
   sharedPlays PlayShare[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  roster      Player[]
 }
 
 model EmailVerification {
@@ -38,90 +29,85 @@ model EmailVerification {
   code      String
   expiresAt DateTime
   payload   Json
-  used      Boolean  @default(false)
   createdAt DateTime @default(now())
+  used      Boolean  @default(false)
 }
 
 model Play {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   formation   String
   playType    String
   description String?
-
   grid        Json?
-
-  // 👇 ownership
   ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
-
-  // 👇 sharing system
-  isPublic    Boolean  @default(false)
-
-  // 👇 optional collaboration later
-  sharedWith  PlayShare[]
-
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  isPublic    Boolean        @default(false)
   favoritedBy FavoritePlay[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  owner       User           @relation(fields: [ownerId], references: [id])
+  sharedWith  PlayShare[]
 }
 
 model FavoritePlay {
-  id      String @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId  String
-  playId  String
+  userId String
+  playId String
 
-  user    User   @relation(fields: [userId], references: [id])
-  play    Play   @relation(fields: [playId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  play Play @relation(fields: [playId], references: [id])
+
+  notes FavoritePlayNote[]
 
   createdAt DateTime @default(now())
 
   @@unique([userId, playId])
 }
 
-model Player {
-  id               String @id @default(cuid())
-  firstName        String
-  lastName         String
-  playerNumber     Int?
-  playerPositions  String // can upgrade later to Json array
-  playerGrade      String?
+model FavoritePlayNote {
+  id String @id @default(cuid())
 
-  userId           String
-  user             User   @relation(fields: [userId], references: [id])
+  favoritePlayId String
+  favoritePlay   FavoritePlay @relation(fields: [favoritePlayId], references: [id], onDelete: Cascade)
+
+  note String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Player {
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String
+  playerNumber    Int?
+  playerPositions String
+  playerGrade     String?
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id])
 }
 
 model Formation {
-  id            String @id @default(cuid())
+  id            String   @id @default(cuid())
   formationName String
-
-  grid          Json?   // ⚠️ same concept as Play.grid
-
+  grid          Json?
   ownerId       String
-  owner         User   @relation(fields: [ownerId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  owner         User     @relation(fields: [ownerId], references: [id])
 }
 
 model PlayShare {
-  id      String @id @default(cuid())
-
-  playId  String
-  userId  String
-
-  play    Play   @relation(fields: [playId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
-
-  permission String @default("view") 
-  // view | edit (future upgrade)
-
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  playId     String
+  userId     String
+  permission String   @default("view")
+  createdAt  DateTime @default(now())
+  play       Play     @relation(fields: [playId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 
   @@unique([playId, userId])
 }

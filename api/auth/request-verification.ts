@@ -6,27 +6,19 @@ const prisma = new PrismaClient()
 
 export default async function handler(req: any, res: any) {
   setCorsHeaders(res)
-
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
-
   try {
     const { email, password, name, sport, team } = req.body
-
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' })
     }
-
-    // generate OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString()
-
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
-
     await prisma.emailVerification.upsert({
       where: { email },
       update: {
@@ -54,9 +46,7 @@ export default async function handler(req: any, res: any) {
         },
       },
     })
-
     const resend = new Resend(process.env.RESEND_API_KEY)
-
     await resend.emails.send({
       from: "PlayRoutes <onboarding@resend.dev>",
       to: email,
@@ -77,19 +67,16 @@ export default async function handler(req: any, res: any) {
     ">
       ${code}
     </div>
-
     <p style="margin-top: 20px; color: #666;">
       This code expires in 10 minutes.
     </p>
   </div>
 `,
     })
-
     return res.status(200).json({
       success: true,
       message: 'Verification code sent',
     })
-
   } catch (err: any) {
     console.error("REQUEST-VERIFICATION ERROR:", err)
     return res.status(500).json({
