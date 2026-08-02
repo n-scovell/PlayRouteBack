@@ -14,7 +14,10 @@ export default async function handler(req: any, res: any) {
       const favorite = await favService.createFavorite(userId, playId);
       return res.status(201).json(favorite)
     } catch (err) {
-      return res.status(500).json({ error: 'Failed to add to favorites' })
+      console.error(err)
+      return res.status(500).json({
+        error: 'Failed to add to favorites'
+      })
     }
   }
   if (req.method === 'GET') {
