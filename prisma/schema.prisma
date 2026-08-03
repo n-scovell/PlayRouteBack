@@ -41,6 +41,7 @@ model Play {
   description String?
   grid        Json?
   ownerId     String
+  favored     Boolean        @default(false)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   isPublic    Boolean        @default(false)
