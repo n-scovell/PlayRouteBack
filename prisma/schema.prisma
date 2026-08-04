@@ -21,6 +21,7 @@ model User {
   plays       Play[]
   sharedPlays PlayShare[]
   roster      Player[]
+  userBadges  UserBadge[]
 }
 
 model EmailVerification {
@@ -111,4 +112,56 @@ model PlayShare {
   user       User     @relation(fields: [userId], references: [id])
 
   @@unique([playId, userId])
+}
+
+
+model Badge {
+  id                  String  @id @default(cuid())
+  name                String
+  description         String
+  icon                String
+  category            BadgeCategory
+  tier                BadgeTier
+  hidden              Boolean @default(false)
+  displayOrder        Int @default(0)
+  requirementType     RequirementType
+  requirementValue    Int?
+  userBadges          UserBadge[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model UserBadge {
+  id          String   @id @default(cuid())
+  userId      String
+  badgeId     String
+  earnedAt    DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge       Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+enum RequirementType {
+  PLAY_COUNT
+  FORMATION_COUNT
+  FAVORITE_COUNT
+  SHARE_COUNT
+  LOGIN_COUNT
+}
+enum BadgeCategory {
+  PLAY
+  FORMATION
+  FAVORITE
+  SHARE
+  ACCOUNT
+  ROSTER
+}
+enum BadgeTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
 }
