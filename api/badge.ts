@@ -6,18 +6,28 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
+  // if (req.method === 'POST') {
+  //   const { userId, playId } = req.body;
+  //   try {
+  //     const favorite = await badgeService.awardBadge(userId, playId);
+  //     return res.status(201).json(favorite)
+  //   } catch (err) {
+  //     console.error(err)
+  //     return res.status(500).json({
+  //       error: 'Failed to add to favorites'
+  //     })
+  //   }
+  // }
+
   if (req.method === 'POST') {
-    const { userId, playId } = req.body;
     try {
-      const favorite = await badgeService.awardBadge(userId, playId);
-      return res.status(201).json(favorite)
+      const badge = await badgeService.createBadge(req.body)
+      return res.status(201).json(badge)
     } catch (err) {
-      console.error(err)
-      return res.status(500).json({
-        error: 'Failed to add to favorites'
-      })
+      return res.status(500).json({ error: 'Failed to create badge' })
     }
   }
+  
   if (req.method === 'GET') {
     const { userId } = req.query
     if (!userId) {
