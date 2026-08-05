@@ -15,6 +15,8 @@ export default async function handler(req: any, res: any) {
     }
   }
   if (req.method === 'DELETE') {
+    const { id } = req.query
+    console.log("id:", id, typeof id)
     try {
       const { id } = req.query
       await badgeService.deleteBadge(id as string)
