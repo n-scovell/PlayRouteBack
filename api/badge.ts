@@ -28,4 +28,16 @@ export default async function handler(req: any, res: any) {
       })
     }
   }
+  if (req.method === 'PATCH') {
+    try {
+      const { id, ...data } = req.body
+      const badge = await badgeService.updateBadge(id, data)
+      return res.status(200).json(badge)
+    } catch (err) {
+      console.error(err)
+      return res.status(500).json({
+        error: err instanceof Error ? err.message : err
+      })
+    }
+  }
 }

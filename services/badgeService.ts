@@ -34,6 +34,23 @@ export const badgeService = {
       data
     })
   },
+  async updateBadge(
+    id: string,
+    data: {
+      name?: string
+      description?: string
+      icon?: string
+      category?: BadgeCategory
+      tier?: BadgeTier
+      requirementType?: RequirementType
+      requirementValue?: number
+    }
+  ){
+    return prisma.badge.update({
+      where: { id },
+      data
+    })
+  },
   async deleteBadge(id: string) {
     return prisma.badge.delete({
       where: { id }
