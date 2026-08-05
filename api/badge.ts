@@ -16,15 +16,15 @@ export default async function handler(req: any, res: any) {
   }
   if (req.method === 'DELETE') {
     try {
-      const { id } = req.query
-      console.log("id:", id, typeof id)
-      await badgeService.deleteBadge(id as string)
+      const { id } = req.body
+      await badgeService.deleteBadge(id)
       return res.status(200).json({
         message: 'Badge deleted'
       })
     } catch (err) {
+      console.error(err)
       return res.status(500).json({
-        error: 'Failed to delete badge dude' 
+        error: err instanceof Error ? err.message : err
       })
     }
   }
