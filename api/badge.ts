@@ -24,7 +24,7 @@ export default async function handler(req: any, res: any) {
       })
     } catch (err) {
       return res.status(500).json({
-        error: 'Failed to delete badge' 
+        error: 'Failed to delete badge dude' 
       })
     }
   }
