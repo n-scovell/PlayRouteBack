@@ -26,7 +26,7 @@ export default async function handler(req: any, res: any) {
     const { userId } = req.query
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({
-        error: "userId is required"
+        error: "userId required"
       })
     }
     const userBadges = await badgeService.getUserBadges(userId)
