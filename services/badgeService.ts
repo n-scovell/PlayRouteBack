@@ -15,6 +15,14 @@ export const badgeService = {
       data
     })
   },
+  async getAllBadges() {
+    return prisma.badge.findMany({
+      orderBy: [
+        { displayOrder: "asc" },
+        { category: "asc" }
+      ]
+    })
+  },
   async updateBadge(id: string, data: Prisma.BadgeUpdateInput) {
     return prisma.badge.update({ where: { id }, data })
   },

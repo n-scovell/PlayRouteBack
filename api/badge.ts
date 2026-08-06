@@ -6,6 +6,12 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
+
+  if (req.method === "GET") {
+    const badges = await badgeService.getAllBadges()
+    return res.status(200).json(badges)
+  }
+
   if (req.method === 'POST') {
     try {
       const badge = await badgeService.createBadge(req.body)
