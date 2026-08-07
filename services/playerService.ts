@@ -21,7 +21,7 @@ export const playerService = {
         }
       }
     })
-  }
+  },
 
 // async deletePlay(id: string) {
 //   return prisma.play.delete({
@@ -40,13 +40,13 @@ export const playerService = {
 //   })
 // },
 
-// async getUserPlays(userId: string) {
-//   return prisma.play.findMany({
-//     where: {
-//       ownerId: userId,
-//     },
-//   })
-// },
+async getUserPlayers(userId: string) {
+  return prisma.player.findMany({
+    where: {
+      userId: userId,
+    },
+  })
+},
 
 // async getSharedPlays(userId: string) {
 //   return prisma.play.findMany({

@@ -17,17 +17,13 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  // if (req.method === 'GET') {
-  //   const { userId } = req.query
-
-  //   if (userId) {
-  //     const plays = await playService.getUserPlays(userId)
-  //     return res.status(200).json(plays)
-  //   }
-
-  //   const publicPlays = await playService.getAllPublicPlays()
-  //   return res.status(200).json(publicPlays)
-  // }
+  if (req.method === 'GET') {
+    const { userId } = req.query
+    if (userId) {
+      const plays = await playerService.getUserPlayers(userId)
+      return res.status(200).json(plays)
+    }
+  }
 
   
   // if (req.method === 'PATCH') {
