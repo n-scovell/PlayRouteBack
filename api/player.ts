@@ -40,8 +40,8 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'DELETE') {
     try {
-      const { id } = req.query
-      await playerService.deletePlayer(id as string)
+      const { id } = req.body
+      await playerService.deletePlayer(id)
       return res.status(200).json({
         message: 'Player deleted'
       })
