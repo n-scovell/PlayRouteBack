@@ -23,11 +23,11 @@ export const playerService = {
     })
   },
 
-// async deletePlay(id: string) {
-//   return prisma.play.delete({
-//     where: { id }
-//   })
-// },
+  async deletePlayer(id: string) {
+    return prisma.player.delete({
+      where: { id }
+    })
+  },
 
 // async getAllPublicPlays() {
 //   return prisma.play.findMany({

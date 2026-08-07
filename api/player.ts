@@ -37,19 +37,20 @@ export default async function handler(req: any, res: any) {
   //     })
   //   }
   // }
-  // if (req.method === 'DELETE') {
-  //   try {
-  //     const { id } = req.query
-  //     await playService.deletePlay(id as string)
-  //     return res.status(200).json({
-  //       message: 'Play deleted'
-  //     })
-  //   } catch (err) {
-  //     return res.status(500).json({
-  //       error: 'Failed to delete play'
-  //     })
-  //   }
-  // }
+
+  if (req.method === 'DELETE') {
+    try {
+      const { id } = req.query
+      await playerService.deletePlayer(id as string)
+      return res.status(200).json({
+        message: 'Player deleted'
+      })
+    } catch (err) {
+      return res.status(500).json({
+        error: 'Failed to delete player'
+      })
+    }
+  }
 
   return res.status(405).json({ message: 'Method not allowed' })
 }
