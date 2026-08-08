@@ -11,7 +11,7 @@ export default async function handler(req: any, res: any) {
       const play = await guestService.createPlay(req.body)
       return res.status(201).json(play)
     } catch (err) {
-      return res.status(500).json({ error: 'Failed to create play for guest' })
+      return res.status(500).json({ error: err })
     }
   }
 }
