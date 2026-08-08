@@ -23,7 +23,6 @@ export const guestService = {
     description?: string
     grid?: any
     guestId: string
-    isPublic?: boolean
     }) {
     const { guestId, ...rest } = data
     return prisma.play.create({
