@@ -20,7 +20,11 @@ export default async function handler(req: any, res: any) {
       return res.status(201).json(guest)
     } catch (err) {
       console.error('CREATE GUEST ERROR:', err)
-      return res.status(500).json({ error: err })
+      // return res.status(500).json({ error: err })
+      return res.status(500).json({
+        error: err instanceof Error ? err.message : err
+      })
+      
     }
   }
   // if (req.method === 'DELETE') {
