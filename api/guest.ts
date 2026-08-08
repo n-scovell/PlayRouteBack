@@ -20,7 +20,7 @@ export default async function handler(req: any, res: any) {
       return res.status(201).json(guest)
     } catch (err) {
       console.error('CREATE GUEST ERROR:', err)
-      return res.status(500).json({ error: 'Failed to create guest' })
+      return res.status(500).json({ error: 'Failed to create guest dude' })
     }
   }
   // if (req.method === 'DELETE') {
