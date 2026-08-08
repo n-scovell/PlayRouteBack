@@ -16,8 +16,8 @@ export default async function handler(req: any, res: any) {
 
   if (req.method === 'POST') {
     try {
-      const badge = await guestService.createGuest(req.body)
-      return res.status(201).json(badge)
+      const guest = await guestService.createGuest(req.body)
+      return res.status(201).json(guest)
     } catch (err) {
       return res.status(500).json({ error: 'Failed to create guest' })
     }
