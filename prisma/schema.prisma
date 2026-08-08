@@ -24,6 +24,17 @@ model User {
   userBadges  UserBadge[]
 }
 
+model Guest {
+  id                String          @id @default(cuid())
+  name              String?
+  description       String?
+  createdAt         DateTime        @default(now())
+  guestExpiresAt    DateTime
+
+  plays             GuestPlay[]
+  formations        GuestFormation[]
+}
+
 model EmailVerification {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -50,6 +61,23 @@ model Play {
   owner       User           @relation(fields: [ownerId], references: [id])
   sharedWith  PlayShare[]
 }
+
+model GuestPlay {
+  id          String   @id @default(cuid())
+  title       String
+  formation   String
+  playType    String
+  description String?
+  grid        Json?
+
+  guestId     String
+  guest       Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
 
 model FavoritePlay {
   id String @id @default(cuid())
@@ -100,6 +128,18 @@ model Formation {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   owner         User     @relation(fields: [ownerId], references: [id])
+}
+
+model GuestFormation {
+  id            String   @id @default(cuid())
+  formationName String
+  grid          Json?
+
+  guestId       String
+  guest         Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model PlayShare {
