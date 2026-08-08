@@ -19,6 +19,7 @@ export default async function handler(req: any, res: any) {
       const guest = await guestService.createGuest(req.body)
       return res.status(201).json(guest)
     } catch (err) {
+      console.error('CREATE GUEST ERROR:', err)
       return res.status(500).json({ error: 'Failed to create guest' })
     }
   }
