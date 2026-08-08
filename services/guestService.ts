@@ -15,5 +15,26 @@ export const guestService = {
         guestExpiresAt
       }
     })
-  }
+  },
+  async createPlay(data: {
+    title: string
+    formation: string
+    playType: string
+    description?: string
+    grid?: any
+    guestId: string
+    isPublic?: boolean
+    }) {
+    const { guestId, ...rest } = data
+    return prisma.play.create({
+      data: {
+        ...rest,
+        owner: {
+          connect: {
+            id: guestId
+          }
+        }
+      }
+    })
+  },
 }

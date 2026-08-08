@@ -2,28 +2,26 @@ import { prisma } from '../lib/db'
 
 export const playService = {
   async createPlay(data: {
-  title: string
-  formation: string
-  playType: string
-  description?: string
-  grid?: any
-  ownerId: string
-  isPublic?: boolean
-}) {
-  const { ownerId, ...rest } = data
-
-  return prisma.play.create({
-    data: {
-      ...rest,
-      owner: {
-        connect: {
-          id: ownerId
+    title: string
+    formation: string
+    playType: string
+    description?: string
+    grid?: any
+    ownerId: string
+    isPublic?: boolean
+    }) {
+    const { ownerId, ...rest } = data
+    return prisma.play.create({
+      data: {
+        ...rest,
+        owner: {
+          connect: {
+            id: ownerId
+          }
         }
       }
-    }
-  })
-},
-
+    })
+  },
 async deletePlay(id: string) {
   return prisma.play.delete({
     where: { id }
