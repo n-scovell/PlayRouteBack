@@ -25,10 +25,10 @@ export const guestService = {
     guestId: string
     }) {
     const { guestId, ...rest } = data
-    return prisma.play.create({
+    return prisma.guestPlay.create({
       data: {
         ...rest,
-        owner: {
+        guest: {
           connect: {
             id: guestId
           }
