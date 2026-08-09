@@ -1,11 +1,11 @@
 import { prisma } from '../lib/db'
-// import bcrypt from 'bcryptjs'
 
 const GUEST_PLAY_LIMIT = 5
 
 export const guestService = {
   async createGuest(data: {
       name: string
+      email: string
       description: string
     }) {
     const guestExpiresAt = new Date()
@@ -19,35 +19,32 @@ export const guestService = {
     })
   },
   async createPlay(data: {
-  title: string
-  formation: string
-  email: string
-  playType: string
-  description?: string
-  grid?: any
-  guestId: string
-}) {
-  const { guestId, ...rest } = data
-
-  const playCount = await prisma.guestPlay.count({
-    where: {
-      guestId
+    title: string
+    formation: string
+    email: string
+    playType: string
+    description?: string
+    grid?: any
+    guestId: string
+  }) {
+    const { guestId, ...rest } = data
+    const playCount = await prisma.guestPlay.count({
+      where: {
+        guestId
+      }
+    })
+    if (playCount >= GUEST_PLAY_LIMIT) {
+      throw new Error('Guest play limit reached')
     }
-  })
-
-  if (playCount >= GUEST_PLAY_LIMIT) {
-    throw new Error('Guest play limit reached')
-  }
-
-  return prisma.guestPlay.create({
-    data: {
-      ...rest,
-      guest: {
-        connect: {
-          id: guestId
+    return prisma.guestPlay.create({
+      data: {
+        ...rest,
+        guest: {
+          connect: {
+            id: guestId
+          }
         }
       }
-    }
-  })
-}
+    })
+  },
 }
