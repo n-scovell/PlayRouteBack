@@ -19,6 +19,7 @@ export const guestService = {
   async createPlay(data: {
     title: string
     formation: string
+    email: string
     playType: string
     description?: string
     grid?: any
