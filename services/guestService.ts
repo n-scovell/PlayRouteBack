@@ -47,4 +47,11 @@ export const guestService = {
       }
     })
   },
+  async getGuestPlays(guestId: string) {
+    return prisma.guestPlay.findMany({
+      where: {
+        guestId: guestId,
+      },
+    })
+  },
 }

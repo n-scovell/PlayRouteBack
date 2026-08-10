@@ -6,6 +6,11 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
+  if (req.method === 'GET') {
+    const { guestId } = req.query
+    const plays = await guestService.getGuestPlays(guestId)
+    return res.status(200).json(plays)
+  }
   if (req.method === 'POST') {
     try {
       const play = await guestService.createPlay(req.body)
