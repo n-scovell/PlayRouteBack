@@ -3,16 +3,12 @@ import { setCorsHeaders } from './_cors'
 
 export default async function handler(req: any, res: any) {
   setCorsHeaders(res)
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end()
-  }
   if (req.method === 'GET') {
     const { guestId } = req.query
     const plays = await guestFormation.getGuestFormations(guestId)
     return res.status(200).json(plays)
   }
   if (req.method === 'POST') {
-    console.log('working')
     try {
       const play = await guestFormation.createFormation(req.body)
       return res.status(201).json(play)
