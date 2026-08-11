@@ -26,13 +26,6 @@ export default async function handler(req: any, res: any) {
       })
     }
   }
-  // if (req.method === 'POST') {
-  //   try {
-  //     const play = await guestService.createPlay(req.body)
-  //     return res.status(201).json(play)
-  //   } catch (err) {
-  //     return res.status(500).json({ error: err })
-  //   }
-  // }
+
 }
 
