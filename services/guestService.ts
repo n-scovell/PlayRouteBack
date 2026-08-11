@@ -1,6 +1,7 @@
 import { prisma } from '../lib/db'
 
 const GUEST_PLAY_LIMIT = 5
+const GUEST_FORMATION_LIMIT = 5
 
 export const guestService = {
   async createGuest(data: {
@@ -47,8 +48,42 @@ export const guestService = {
       }
     })
   },
+
+  async createFormation(data: {
+    formationName: string
+    grid?: any
+    guestId: string
+  }) {
+    const { guestId, ...rest } = data
+    const formationCount = await prisma.guestFormation.count({
+      where: {
+        guestId
+      }
+    })
+    if (formationCount >= GUEST_FORMATION_LIMIT) {
+      throw new Error('Guest formation limit reached')
+    }
+    return prisma.guestFormation.create({
+      data: {
+        ...rest,
+        guest: {
+          connect: {
+            id: guestId
+          }
+        }
+      }
+    })
+  },
+
   async getGuestPlays(guestId: string) {
     return prisma.guestPlay.findMany({
+      where: {
+        guestId: guestId,
+      },
+    })
+  },
+  async getGuestFormations(guestId: string) {
+    return prisma.guestFormation.findMany({
       where: {
         guestId: guestId,
       },
