@@ -12,6 +12,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json(plays)
   }
   if (req.method === 'POST') {
+    console.log('working')
     try {
       const play = await guestService.createFormation(req.body)
       return res.status(201).json(play)
