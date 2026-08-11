@@ -1,4 +1,4 @@
-import { badgeService } from '../services/badgeService'
+import { badgeService } from './badgeService'
 import { setCorsHeaders } from './_cors'
 
 export default async function handler(req: any, res: any) {
