@@ -1,4 +1,4 @@
-import { guestService } from '../services/guestFormation'
+import { guestFormation } from '../services/guestFormation'
 import { setCorsHeaders } from './_cors'
 
 export default async function handler(req: any, res: any) {
@@ -8,13 +8,13 @@ export default async function handler(req: any, res: any) {
   }
   if (req.method === 'GET') {
     const { guestId } = req.query
-    const plays = await guestService.getGuestFormations(guestId)
+    const plays = await guestFormation.getGuestFormations(guestId)
     return res.status(200).json(plays)
   }
   if (req.method === 'POST') {
     console.log('working')
     try {
-      const play = await guestService.createFormation(req.body)
+      const play = await guestFormation.createFormation(req.body)
       return res.status(201).json(play)
     } catch (err: any) {
       if (err.message === 'Guest formation limit reached') {
