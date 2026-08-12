@@ -1,11 +1,15 @@
 import { guestFormation } from '../services/guestFormation'
 import { setCorsHeaders } from './_cors'
 
-export default async function handler(req: any, res: any) {
-  console.log('GUEST FORMATION HIT')
+export default function handler(req: any, res: any) {
+  setCorsHeaders(res)
 
-  return res.status(201).json({
-    success: true
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+
+  return res.status(200).json({
+    hello: 'guestformation'
   })
 }
 
