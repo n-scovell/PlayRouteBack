@@ -1,4 +1,4 @@
-import { guestFormation } from '../services/guestFormation'
+import { guestFormation } from '../services/guestFormationService'
 import { setCorsHeaders } from './_cors'
 
 export default async function handler(req: any, res: any) {
