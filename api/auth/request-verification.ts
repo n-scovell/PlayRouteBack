@@ -53,7 +53,7 @@ export default async function handler(req: any, res: any) {
       subject: "Verify your Player Routes account",
       html: `
   <div style="font-family: Arial, sans-serif; padding: 20px;">
-    <img src="https://www.playerroutes.com/images/PR_Black.png" alt="Player Routes Logo" width="150px" />
+    <img src="https://www.playerroutes.com/images/PR_Black.png" alt="Player Routes Logo" width="150" />
     <h2 style="color: #111;">Verify your account</h2>
     <p>Your Player Routes verification code is:</p>
 
