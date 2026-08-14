@@ -2,7 +2,7 @@ export function setCorsHeaders(res: any) {
   const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://www.playerroutes.com/',
+    'https://www.playerroutes.com',
     'https://playerroutes.com',
     'https://play-routes-front.vercel.app'
   ]
