@@ -50,11 +50,11 @@ export default async function handler(req: any, res: any) {
     await resend.emails.send({
       from: "PlayerRoutes <noreply@playerroutes.com>",
       to: email,
-      subject: "Your verification code",
+      subject: "Verify your Player Routes account",
       html: `
   <div style="font-family: Arial, sans-serif; padding: 20px;">
     <h2 style="color: #111;">Verify your account</h2>
-    <p>Your verification code is:</p>
+    <p>Your Player Routes verification code is:</p>
 
     <div style="
       font-size: 28px;
