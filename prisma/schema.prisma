@@ -54,6 +54,7 @@ model Play {
   description String?
   grid        Json?
   ownerId     String
+  pursuit     Pursuit        @default(offense)
   favored     Boolean        @default(false)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -125,6 +126,7 @@ model Formation {
   id            String   @id @default(cuid())
   formationName String
   grid          Json?
+  pursuit       Pursuit  @default(offense)
   ownerId       String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -205,4 +207,9 @@ enum BadgeTier {
   GOLD
   PLATINUM
   DIAMOND
+}
+
+enum Pursuit {
+  offense
+  defense
 }

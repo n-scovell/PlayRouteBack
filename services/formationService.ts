@@ -4,6 +4,7 @@ import { prisma } from '../lib/db'
   export const formationService = {
     async createFormation(data: {
     formationName: string
+    pursuit: string
     grid?: any
     ownerId: string
   }) {
