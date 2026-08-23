@@ -1,6 +1,9 @@
 import { prisma } from '../lib/db'
 import bcrypt from 'bcryptjs'
 
+import jwt from 'jsonwebtoken'
+const JWT_SECRET = process.env.JWT_SECRET!
+
 export const userService = {
   async createUser(data: {
     email: string
@@ -67,16 +70,43 @@ export const userService = {
   },
 
   async playerLogin(team: string, teamPin: string) {
-    const user = await prisma.user.findFirst({ where: {team,}, })
-    if (!user || !user.teamPin) {
-      throw new Error('Invalid team or team PIN')
-    }
-    const validPin = await bcrypt.compare( teamPin, user.teamPin )
-    if (!validPin) {
-      throw new Error('Invalid team or team PIN')
-    }
-    return user
+  const user = await prisma.user.findFirst({
+    where: { team },
+  })
+
+  if (!user || !user.teamPin) {
+    throw new Error('Invalid team or team PIN')
   }
+
+  const validPin = await bcrypt.compare(
+    teamPin,
+    user.teamPin
+  )
+
+  if (!validPin) {
+    throw new Error('Invalid team or team PIN')
+  }
+
+  const token = jwt.sign(
+    {
+      userId: user.id,
+      access: 'player',
+    },
+    JWT_SECRET,
+    {
+      expiresIn: '8h',
+    }
+  )
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      team: user.team,
+      sport: user.sport,
+    },
+  }
+}
 
 
 }
