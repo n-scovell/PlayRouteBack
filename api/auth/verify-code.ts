@@ -37,15 +37,17 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Invalid verification code' })
     }
     // 5. Extract signup payload
-    const { email: userEmail, password, name, sport, team } =
+    const { email: userEmail, password, teamPin, name, sport, team } =
       record.payload as any
     // 6. hash password (NOW inside handler = correct)
     const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPin = await bcrypt.hash(teamPin, 10)
     // 7. create user
     const user = await prisma.user.create({
       data: {
         email: userEmail,
         password: hashedPassword,
+        teamPin: hashedPin,
         name,
         sport,
         team,
