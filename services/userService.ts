@@ -5,17 +5,22 @@ export const userService = {
   async createUser(data: {
     email: string
     password: string
+    teamPin?: string
     name?: string
     sport?: string
     team?: string 
   }) {
 
-    // 🔐 Hash password before saving
     const hashedPassword = await bcrypt.hash(data.password, 10)
+
+    const hashedPin = data.teamPin
+      ? await bcrypt.hash(data.teamPin, 10)
+      : undefined
 
     return prisma.user.create({
       data: {
         ...data,
+        teamPin: hashedPin,
         password: hashedPassword,
       },
     })
@@ -26,6 +31,7 @@ export const userService = {
     data: {
       password?: string
       name?: string
+      teamPin?: string
       sport?: string
       team?: string
     }) {
@@ -33,6 +39,9 @@ export const userService = {
 
       if (updateData.password) {
         updateData.password = await bcrypt.hash(updateData.password, 10)
+      }
+      if (updateData.teamPin) {
+        updateData.teamPin = await bcrypt.hash(updateData.teamPin, 10)
       }
 
       return prisma.user.update({
