@@ -65,4 +65,18 @@ export const userService = {
       where: { email },
     })
   },
+
+  async playerLogin(team: string, teamPin: string) {
+    const user = await prisma.user.findFirst({ where: {team,}, })
+    if (!user || !user.teamPin) {
+      throw new Error('Invalid team or team PIN')
+    }
+    const validPin = await bcrypt.compare( teamPin, user.teamPin )
+    if (!validPin) {
+      throw new Error('Invalid team or team PIN')
+    }
+    return user
+  }
+
+
 }

@@ -20,12 +20,45 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json(user)
   }
 
+  // if (req.method === 'POST') {
+  //   try {
+  //     const user = await userService.createUser(req.body)
+  //     return res.status(201).json(user)
+  //   } catch (err) {
+  //     return res.status(500).json({ error: 'Failed to create user' })
+  //   }
+  // }
+
   if (req.method === 'POST') {
     try {
-      const user = await userService.createUser(req.body)
-      return res.status(201).json(user)
-    } catch (err) {
-      return res.status(500).json({ error: 'Failed to create user' })
+      const { action } = req.body
+      if (action === 'login') {
+        const { email, password } = req.body
+        const result = await userService.login(email, password)
+        return res.status(200).json(result)
+      }
+      if (action === 'player-login') {
+        const { team, teamPin } = req.body
+        if (!team || !teamPin) {
+          return res.status(400).json({
+            error: 'Team and team PIN are required'
+          })
+        }
+        const result = await userService.playerLogin(team, teamPin)
+        return res.status(200).json(result)
+      }
+      if (action === 'create') {
+        const user = await userService.createUser(req.body)
+        return res.status(201).json(user)
+      }
+      return res.status(400).json({
+        error: 'Invalid action'
+      })
+    } catch (err: any) {
+      console.error('USER API ERROR:', err)
+      return res.status(500).json({
+        error: err.message || 'User operation failed'
+      })
     }
   }
 
