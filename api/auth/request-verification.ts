@@ -27,7 +27,7 @@ export default async function handler(req: any, res: any) {
         payload: {
           email,
           password: password, // ✅ secure now
-          teamPin,
+          teamPin: teamPin,
           name,
           sport,
           team,
@@ -41,7 +41,7 @@ export default async function handler(req: any, res: any) {
         payload: {
           email,
           password: password, // ✅ secure now
-          teamPin,
+          teamPin: teamPin,
           name,
           sport,
           team,
