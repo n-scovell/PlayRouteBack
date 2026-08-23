@@ -13,7 +13,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
   try {
-    const { email, password, name, sport, team } = req.body
+    const { email, password, teamPin, name, sport, team } = req.body
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' })
     }
@@ -27,6 +27,7 @@ export default async function handler(req: any, res: any) {
         payload: {
           email,
           password: password, // ✅ secure now
+          teamPin,
           name,
           sport,
           team,
@@ -40,6 +41,7 @@ export default async function handler(req: any, res: any) {
         payload: {
           email,
           password: password, // ✅ secure now
+          teamPin,
           name,
           sport,
           team,
