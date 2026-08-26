@@ -7,22 +7,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Plan {
+  FREE
+  COACH
+  TEAM
+}
+enum SubscriptionStatus {
+  NONE
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  INCOMPLETE
+  TRIALING
+}
+enum PaymentStatus {
+  PAID
+  REFUNDED
+  FAILED
+}
+
+
 model User {
-  id          String         @id @default(cuid())
-  email       String         @unique
-  password    String
-  name        String?
-  sport       String?
-  team        String?
-  teamPin     String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  favorites   FavoritePlay[]
-  formations  Formation[]
-  plays       Play[]
-  sharedPlays PlayShare[]
-  roster      Player[]
-  userBadges  UserBadge[]
+  id                    String                @id @default(cuid())
+  email                 String                @unique
+  password              String
+  name                  String?
+  sport                 String?
+  team                  String?
+  teamPin               String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  favorites             FavoritePlay[]
+  formations            Formation[]
+  plays                 Play[]
+  sharedPlays           PlayShare[]
+  roster                Player[]
+  plan                  Plan                  @default(FREE)
+  subscriptionStatus    SubscriptionStatus    @default(NONE)
+  stripeCustomerId      String?               @unique
+  stripeSubscriptionId  String?               @unique
+  payments              Payment[]
+  userBadges            UserBadge[]
+}
+
+model Payment {
+  id                    String           @id @default(cuid())
+  userId                String
+  amount                Int
+  plan                  Plan
+  status                PaymentStatus
+  stripePaymentId       String?          @unique
+  stripeSubscriptionId  String?
+  paidAt                DateTime
+  createdAt             DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Guest {

@@ -16,7 +16,8 @@
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "prisma": "^6.19.3",
-    "resend": "^6.12.4"
+    "resend": "^6.12.4",
+    "stripe": "^22.5.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
