@@ -5,7 +5,7 @@ export const config = {
     bodyParser: false
   }
 }
-
+console.log('test')
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export default async function handler(req: any, res: any) {
