@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { setCorsHeaders } from './_cors'
+import { prisma } from '../lib/db'
 
 export const config = {
   api: {
@@ -66,34 +67,68 @@ export default async function handler(req: any, res: any) {
 
       if (event.type === 'checkout.session.completed') {
 
-        const session =
-          event.data.object as Stripe.Checkout.Session
+      const session =
+        event.data.object as Stripe.Checkout.Session
 
-        console.log(
-          'CHECKOUT COMPLETED:',
-          session.id
-        )
+      const userId = session.metadata?.userId
+      const plan = session.metadata?.plan
 
-        console.log(
-          'CUSTOMER:',
-          session.customer
-        )
+      const customerId =
+        typeof session.customer === 'string'
+          ? session.customer
+          : session.customer?.id
 
-        console.log(
-          'EMAIL:',
-          session.customer_details?.email
-        )
+      const subscriptionId =
+        typeof session.subscription === 'string'
+          ? session.subscription
+          : session.subscription?.id
 
-        console.log(
-          'USER ID:',
-          session.metadata?.userId
-        )
+      console.log('CHECKOUT COMPLETED:', session.id)
+      console.log('CUSTOMER:', customerId)
+      console.log('EMAIL:', session.customer_details?.email)
+      console.log('USER ID:', userId)
+      console.log('PLAN:', plan)
+      console.log('SUBSCRIPTION:', subscriptionId)
 
-        console.log(
-          'PLAN:',
-          session.metadata?.plan
+      if (!userId || !plan) {
+        throw new Error(
+          'Missing userId or plan in Stripe metadata'
         )
       }
+
+      if (!customerId || !subscriptionId) {
+        throw new Error(
+          'Missing Stripe customer or subscription'
+        )
+      }
+
+      // Update Player Routes user
+      await prisma.user.update({
+        where: {
+          id: userId
+        },
+        data: {
+          plan: plan as 'COACH' | 'TEAM',
+          subscriptionStatus: 'ACTIVE',
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscriptionId
+        }
+      })
+
+      // Create payment record
+      await prisma.payment.create({
+        data: {
+          userId,
+          amount: 600,
+          plan: plan as 'COACH' | 'TEAM',
+          status: 'PAID',
+          stripePaymentId: session.id,
+          paidAt: new Date()
+        }
+      })
+
+      console.log('PLAYER ROUTES ACCOUNT ACTIVATED')
+    }
 
       return res.status(200).json({
         received: true,
