@@ -60,6 +60,7 @@ export default async function handler(req: any, res: any) {
         sport: user.sport,
         team: user.team,
         plan: user.plan,
+        teamPin: user.teamPin,
         subscriptionStatus: user.subscriptionStatus,
       },
     })

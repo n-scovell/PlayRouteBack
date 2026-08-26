@@ -32,6 +32,7 @@ export const userService = {
       sport: user.sport,
       team: user.team,
       plan: user.plan,
+      teamPin: user.teamPin,
       subscriptionStatus: user.subscriptionStatus,
     }
   },
