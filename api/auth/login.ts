@@ -59,6 +59,8 @@ export default async function handler(req: any, res: any) {
         name: user.name,
         sport: user.sport,
         team: user.team,
+        plan: user.plan,
+        subscriptionStatus: user.subscriptionStatus,
       },
     })
   } catch (err) {
