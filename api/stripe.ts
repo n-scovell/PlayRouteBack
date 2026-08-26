@@ -2,16 +2,26 @@ import Stripe from 'stripe'
 
 export const config = {
   api: {
-    bodyParser: false
-  }
+    bodyParser: false,
+  },
 }
-console.log('test')
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+
+async function getRawBody(req: any): Promise<Buffer> {
+  const chunks: Buffer[] = []
+
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+
+  return Buffer.concat(chunks)
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({
-      error: 'Method not allowed'
+      error: 'Method not allowed',
     })
   }
 
@@ -19,13 +29,15 @@ export default async function handler(req: any, res: any) {
 
   if (!signature) {
     return res.status(400).json({
-      error: 'Missing Stripe signature'
+      error: 'Missing Stripe signature',
     })
   }
 
   try {
+    const rawBody = await getRawBody(req)
+
     const event = stripe.webhooks.constructEvent(
-      req.body,
+      rawBody,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
@@ -37,17 +49,20 @@ export default async function handler(req: any, res: any) {
 
       console.log('CHECKOUT COMPLETED:', session.id)
       console.log('CUSTOMER:', session.customer)
-      console.log('EMAIL:', session.customer_details?.email)
+      console.log(
+        'EMAIL:',
+        session.customer_details?.email
+      )
     }
 
     return res.status(200).json({
-      received: true
+      received: true,
     })
   } catch (err: any) {
     console.error('STRIPE WEBHOOK ERROR:', err.message)
 
     return res.status(400).json({
-      error: `Webhook Error: ${err.message}`
+      error: `Webhook Error: ${err.message}`,
     })
   }
 }
