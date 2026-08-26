@@ -7,7 +7,6 @@ export const config = {
   },
 }
 
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 async function getRawBody(req: any): Promise<Buffer> {
@@ -25,7 +24,19 @@ async function getRawBody(req: any): Promise<Buffer> {
 }
 
 export default async function handler(req: any, res: any) {
+
+  console.log(
+    'STRIPE REQUEST:',
+    req.method,
+    req.headers.origin
+  )
+  // CORS MUST happen first
   setCorsHeaders(res)
+
+  // Handle browser preflight BEFORE reading the body
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end()
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).json({
