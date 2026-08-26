@@ -127,7 +127,7 @@ export default async function handler(req: any, res: any) {
         }
       })
 
-      console.log('PLAYER ROUTES ACCOUNT ACTIVATED')
+      console.log('SO COOL! PLAYER ROUTES ACCOUNT ACTIVATED')
     }
 
       return res.status(200).json({
