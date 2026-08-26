@@ -158,14 +158,17 @@ export default async function handler(req: any, res: any) {
       })
     }
 
-    if (plan !== 'COACH') {
+    if (!['COACH', 'TEAM'].includes(plan)) {
       return res.status(400).json({
         error: 'Invalid plan',
       })
     }
 
-    const priceId =
-      process.env.STRIPE_COACH_PRICE_ID
+    const prices = {
+      COACH: process.env.STRIPE_COACH_PRICE_ID!,
+      TEAM: process.env.STRIPE_TEAM_PRICE_ID!,
+    }
+    const priceId = prices[plan as keyof typeof prices]
 
     if (!priceId) {
       return res.status(500).json({
