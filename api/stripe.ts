@@ -114,12 +114,15 @@ export default async function handler(req: any, res: any) {
           stripeSubscriptionId: subscriptionId
         }
       })
-
+      const amounts = {
+        COACH: 600,
+        TEAM: 1000,
+      }
       // Create payment record
       await prisma.payment.create({
         data: {
           userId,
-          amount: 600,
+          amount: amounts[plan as keyof typeof amounts],
           plan: plan as 'COACH' | 'TEAM',
           status: 'PAID',
           stripePaymentId: session.id,
@@ -172,7 +175,7 @@ export default async function handler(req: any, res: any) {
 
     if (!priceId) {
       return res.status(500).json({
-        error: 'Stripe Coach price is not configured',
+        error: `Stripe ${plan} price is not configured`,
       })
     }
 
