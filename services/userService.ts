@@ -5,28 +5,35 @@ import jwt from 'jsonwebtoken'
 const JWT_SECRET = process.env.JWT_SECRET!
 
 export const userService = {
+  
   async createUser(data: {
     email: string
     password: string
     teamPin?: string
     name?: string
     sport?: string
-    team?: string 
+    team?: string
   }) {
-
     const hashedPassword = await bcrypt.hash(data.password, 10)
-
     const hashedPin = data.teamPin
       ? await bcrypt.hash(data.teamPin, 10)
       : undefined
-
-    return prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         ...data,
         teamPin: hashedPin,
         password: hashedPassword,
       },
     })
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      sport: user.sport,
+      team: user.team,
+      plan: user.plan,
+      subscriptionStatus: user.subscriptionStatus,
+    }
   },
 
   async updateUser(

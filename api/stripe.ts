@@ -12,57 +12,155 @@ async function getRawBody(req: any): Promise<Buffer> {
   const chunks: Buffer[] = []
 
   for await (const chunk of req) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    chunks.push(
+      Buffer.isBuffer(chunk)
+        ? chunk
+        : Buffer.from(chunk)
+    )
   }
 
   return Buffer.concat(chunks)
 }
 
 export default async function handler(req: any, res: any) {
+
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'Method not allowed',
     })
   }
 
-  const signature = req.headers['stripe-signature']
-
-  if (!signature) {
-    return res.status(400).json({
-      error: 'Missing Stripe signature',
-    })
-  }
-
   try {
+
     const rawBody = await getRawBody(req)
 
-    const event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    )
+    const signature = req.headers['stripe-signature']
 
-    console.log('STRIPE EVENT:', event.type)
+    // --------------------------------
+    // STRIPE WEBHOOK
+    // --------------------------------
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session
+    if (signature) {
 
-      console.log('CHECKOUT COMPLETED:', session.id)
-      console.log('CUSTOMER:', session.customer)
-      console.log(
-        'EMAIL:',
-        session.customer_details?.email
+      const event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
       )
+
+      console.log('STRIPE EVENT:', event.type)
+
+      if (event.type === 'checkout.session.completed') {
+
+        const session =
+          event.data.object as Stripe.Checkout.Session
+
+        console.log(
+          'CHECKOUT COMPLETED:',
+          session.id
+        )
+
+        console.log(
+          'CUSTOMER:',
+          session.customer
+        )
+
+        console.log(
+          'EMAIL:',
+          session.customer_details?.email
+        )
+
+        console.log(
+          'USER ID:',
+          session.metadata?.userId
+        )
+
+        console.log(
+          'PLAN:',
+          session.metadata?.plan
+        )
+      }
+
+      return res.status(200).json({
+        received: true,
+      })
     }
 
+    // --------------------------------
+    // CREATE CHECKOUT
+    // --------------------------------
+
+    const body = JSON.parse(rawBody.toString())
+
+    if (body.action !== 'create-checkout') {
+      return res.status(400).json({
+        error: 'Invalid action',
+      })
+    }
+
+    const {
+      userId,
+      plan,
+    } = body
+
+    if (!userId || !plan) {
+      return res.status(400).json({
+        error: 'User ID and plan are required',
+      })
+    }
+
+    if (plan !== 'COACH') {
+      return res.status(400).json({
+        error: 'Invalid plan',
+      })
+    }
+
+    const priceId =
+      process.env.STRIPE_COACH_PRICE_ID
+
+    if (!priceId) {
+      return res.status(500).json({
+        error: 'Stripe Coach price is not configured',
+      })
+    }
+
+    const session =
+      await stripe.checkout.sessions.create({
+
+        mode: 'subscription',
+
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+
+        metadata: {
+          userId,
+          plan,
+        },
+
+        success_url:
+          'https://playerroutes.com/register?payment=success',
+
+        cancel_url:
+          'https://playerroutes.com/register?payment=cancelled',
+      })
+
     return res.status(200).json({
-      received: true,
+      url: session.url,
     })
+
   } catch (err: any) {
-    console.error('STRIPE WEBHOOK ERROR:', err.message)
+
+    console.error(
+      'STRIPE ERROR:',
+      err.message
+    )
 
     return res.status(400).json({
-      error: `Webhook Error: ${err.message}`,
+      error: err.message || 'Stripe request failed',
     })
   }
 }
