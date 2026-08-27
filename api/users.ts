@@ -14,10 +14,18 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json(users)
   }
 
+  // if (req.method === 'PUT') {
+  //   const { id, ...data } = req.body
+  //   const user = await userService.updateUser(id, data)
+  //   return res.status(200).json(user)
+  // }
+
   if (req.method === 'PUT') {
-    const { id, ...data } = req.body
-    const user = await userService.updateUser(id, data)
-    return res.status(200).json(user)
+  const { id, ...data } = req.body
+  console.log('ID:', id)
+  console.log('DATA:', data)
+  const user = await userService.updateUser(id, data)
+  return res.status(200).json(user)
   }
 
   // if (req.method === 'POST') {
