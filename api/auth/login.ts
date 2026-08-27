@@ -1,6 +1,6 @@
 import { userService } from '../../services/userService'
 import { setCorsHeaders } from '../_cors'
-import bcrypt from 'bcryptjs'
+// import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET!

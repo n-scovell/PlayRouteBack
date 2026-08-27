@@ -128,7 +128,7 @@ export const userService = {
   data: {
     password?: string
     name?: string
-    teamPin?: string | number
+    teamPin?: string
     sport?: string
     team?: string
   }
@@ -147,7 +147,7 @@ export const userService = {
     where: { id },
     data: updateData,
   })
-}
+},
 
   async getUsers() {
     return prisma.user.findMany()
