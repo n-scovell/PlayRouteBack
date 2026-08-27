@@ -37,28 +37,30 @@ export const userService = {
   },
 
   async updateUser(
-    id: string,
-    data: {
-      password?: string
-      name?: string
-      teamPin?: string
-      sport?: string
-      team?: string
-    }) {
-      const updateData = { ...data }
+  id: string,
+  data: {
+    password?: string
+    name?: string
+    teamPin?: string | number
+    sport?: string
+    team?: string
+  }
+) {
+  const updateData = { ...data }
 
-      if (updateData.password) {
-        updateData.password = await bcrypt.hash(updateData.password, 10)
-      }
-      if (updateData.teamPin) {
-        updateData.teamPin = await bcrypt.hash(updateData.teamPin, 10)
-      }
+  if (updateData.password) {
+    updateData.password = await bcrypt.hash(updateData.password, 10)
+  }
 
-      return prisma.user.update({
-        where: { id },
-        data: updateData,
-      })
-  },
+  if (updateData.teamPin) {
+  updateData.teamPin = await bcrypt.hash(String(updateData.teamPin), 10)
+  }
+
+  return prisma.user.update({
+    where: { id },
+    data: updateData,
+  })
+}
 
   async getUsers() {
     return prisma.user.findMany()
