@@ -28,15 +28,6 @@ export default async function handler(req: any, res: any) {
   return res.status(200).json(user)
   }
 
-  // if (req.method === 'POST') {
-  //   try {
-  //     const user = await userService.createUser(req.body)
-  //     return res.status(201).json(user)
-  //   } catch (err) {
-  //     return res.status(500).json({ error: 'Failed to create user' })
-  //   }
-  // }
-
   if (req.method === 'POST') {
     try {
       const { action } = req.body

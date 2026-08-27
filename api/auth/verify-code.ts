@@ -29,8 +29,8 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Verification already used' })
     }
     // 3. Check expiry
-    if (record.expiresAt < new Date()) {
-      return res.status(400).json({ error: 'Verification code expired' })
+    if (record.expiresAt < new Date()) {Verification
+      return res.status(400).json({ error: ' code expired' })
     }
     // 4. Check code match
     if (record.code !== code) {

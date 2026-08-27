@@ -5,6 +5,93 @@ import jwt from 'jsonwebtoken'
 const JWT_SECRET = process.env.JWT_SECRET!
 
 export const userService = {
+
+  
+  async login(email: string, password: string) {
+    const user = await this.getUserByEmail(email)
+    if (!user) {
+      throw new Error('Invalid credentials')
+    }
+    const validPassword = await bcrypt.compare(
+      password,
+      user.password
+    )
+    if (!validPassword) {
+      throw new Error('Invalid credentials')
+    }
+    const token = jwt.sign(
+      {userId: user.id,email: user.email,}, JWT_SECRET,
+      {expiresIn: '7d',}
+    )
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        sport: user.sport,
+        team: user.team,
+        plan: user.plan,
+        subscriptionStatus: user.subscriptionStatus,
+      },
+    }
+  },
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.getUserById(userId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+    const validPassword = await bcrypt.compare(
+      currentPassword,
+      user.password
+    )
+    if (!validPassword) {
+      throw new Error('Current password is incorrect')
+    }
+    if (currentPassword === newPassword) {
+      throw new Error(
+        'New password cannot be the same as old password'
+      )
+    }
+    if (newPassword.length < 10) {
+      throw new Error(
+        'Password needs to be at least 10 characters'
+      )
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      throw new Error(
+        'Password needs 1 capital letter'
+      )
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      throw new Error(
+        'Password needs 1 lowercase letter'
+      )
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      throw new Error(
+        'Password needs at least 1 number'
+      )
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+      throw new Error(
+        'Password needs a special character'
+      )
+    }
+
+    await this.updateUser(userId, {
+      password: newPassword,
+    })
+
+    return {
+      message: 'Password updated successfully',
+    }
+  },
+
   
   async createUser(data: {
     email: string
@@ -106,6 +193,9 @@ export const userService = {
       expiresIn: '8h',
     }
   )
+
+
+  
 
   return {
     token,
