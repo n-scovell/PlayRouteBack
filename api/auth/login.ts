@@ -11,63 +11,177 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
-
   if (req.method !== 'POST') {
     return res.status(405).json({
       message: 'Method not allowed dude',
     })
   }
 
-  try {
-    const { email, password } = req.body
+  const { action } = req.body
 
-    const user = await userService.getUserByEmail(email)
+  if (action === 'login') {
+    try {
+      const { email, password } = req.body
+      const user = await userService.getUserByEmail(email)
+      if (!user) {
+        return res.status(401).json({
+          error: 'Invalid credentials',
+        })
+      }
+      const validPassword = await bcrypt.compare(
+        password,
+        user.password
+      )
+      if (!validPassword) {
+        return res.status(401).json({
+          error: 'Invalid credentials',
+        })
+      }
+      const token = jwt.sign(
+        {
+          userId: user.id,
+          email: user.email,
+        },
+        JWT_SECRET,
+        {
+          expiresIn: '7d',
+        }
+      )
+      return res.status(200).json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          sport: user.sport,
+          team: user.team,
+          plan: user.plan,
+          subscriptionStatus: user.subscriptionStatus,
+        },
+      })
+    } catch (err) {
+      console.error(err)
 
-    if (!user) {
+      return res.status(500).json({
+        error: 'Login failed',
+      })
+    }
+  }
+
+  if (action === 'change-password') {
+    try {
+
+    // Get JWT
+    const authHeader = req.headers.authorization
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
-        error: 'Invalid credentials',
+        error: 'Authentication required',
       })
     }
 
+    const token = authHeader.split(' ')[1]
+
+    // Verify JWT
+    let decoded: any
+
+    try {
+      decoded = jwt.verify(token, JWT_SECRET)
+    } catch {
+      return res.status(401).json({
+        error: 'Invalid or expired token',
+      })
+    }
+
+    const {
+      currentPassword,
+      newPassword,
+    } = req.body
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        error: 'Current password and new password are required',
+      })
+    }
+
+    // Get logged-in user
+    const user = await userService.getUserById(decoded.userId)
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+      })
+    }
+
+    // Check current password
     const validPassword = await bcrypt.compare(
-      password,
+      currentPassword,
       user.password
     )
 
     if (!validPassword) {
       return res.status(401).json({
-        error: 'Invalid credentials',
+        error: 'Current password is incorrect',
       })
     }
 
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-      },
-      JWT_SECRET,
-      {
-        expiresIn: '7d',
-      }
-    )
+    // Make sure new password isn't the same
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        error: 'New password cannot be the same as old password',
+      })
+    }
+
+    // Validate new password
+    if (newPassword.length < 10) {
+      return res.status(400).json({
+        error: 'Password needs to be at least 10 characters',
+      })
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      return res.status(400).json({
+        error: 'Password needs 1 capital letter',
+      })
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      return res.status(400).json({
+        error: 'Password needs 1 lowercase letter',
+      })
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      return res.status(400).json({
+        error: 'Password needs at least 1 number',
+      })
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+      return res.status(400).json({
+        error: 'Password needs a special character',
+      })
+    }
+
+    // updateUser() handles bcrypt hashing
+    await userService.updateUser(decoded.userId, {
+      password: newPassword,
+    })
 
     return res.status(200).json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        sport: user.sport,
-        team: user.team,
-        plan: user.plan,
-        subscriptionStatus: user.subscriptionStatus,
-      },
+      message: 'Password updated successfully',
     })
+
   } catch (err) {
+
     console.error(err)
 
     return res.status(500).json({
-      error: 'Login failed',
+      error: 'Password update failed',
     })
   }
+  }
+  return res.status(400).json({
+    error: 'Invalid action',
+  })
 }
