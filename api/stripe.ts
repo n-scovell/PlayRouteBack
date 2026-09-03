@@ -107,8 +107,7 @@ export default async function handler(
           subscriptionData.metadata?.plan
 
         const customerId =
-          typeof subscriptionData.customer ===
-          'string'
+          typeof subscriptionData.customer === 'string'
             ? subscriptionData.customer
             : subscriptionData.customer?.id
 
@@ -314,7 +313,7 @@ export default async function handler(
     )
 
     // ==================================================
-    // CREATE SUBSCRIPTION
+    // CREATE SUBSCRIPTION REQUEST
     // ==================================================
 
     if (
@@ -380,7 +379,7 @@ export default async function handler(
     }
 
     // ==================================================
-    // CREATE CUSTOMER
+    // CREATE STRIPE CUSTOMER
     // ==================================================
 
     const customer =
@@ -396,7 +395,7 @@ export default async function handler(
     )
 
     // ==================================================
-    // CREATE SUBSCRIPTION
+    // CREATE STRIPE SUBSCRIPTION
     // ==================================================
 
     const subscription =
@@ -424,7 +423,8 @@ export default async function handler(
         },
 
         expand: [
-          'latest_invoice.confirmation_secret',
+          'latest_invoice',
+          'latest_invoice.payments',
         ],
       })
 
@@ -459,25 +459,56 @@ export default async function handler(
     )
 
     // ==================================================
-    // GET CONFIRMATION SECRET
+    // GET INVOICE PAYMENT
     // ==================================================
 
-    const confirmationSecret =
-      invoice.confirmation_secret
+    const payments =
+      invoice.payments?.data
 
-    if (!confirmationSecret) {
+    if (
+      !payments ||
+      payments.length === 0
+    ) {
       throw new Error(
-        'Stripe did not return a confirmation secret'
+        'Stripe did not return an invoice payment'
+      )
+    }
+
+    const paymentIntentId =
+      payments[0].payment?.payment_intent
+
+    if (
+      !paymentIntentId ||
+      typeof paymentIntentId !== 'string'
+    ) {
+      throw new Error(
+        'Stripe did not return a payment intent'
       )
     }
 
     console.log(
-      'CONFIRMATION SECRET:',
-      JSON.stringify(
-        confirmationSecret,
-        null,
-        2
+      'PAYMENT INTENT:',
+      paymentIntentId
+    )
+
+    // ==================================================
+    // RETRIEVE PAYMENT INTENT
+    // ==================================================
+
+    const paymentIntent =
+      await stripe.paymentIntents.retrieve(
+        paymentIntentId
       )
+
+    if (!paymentIntent.client_secret) {
+      throw new Error(
+        'Stripe payment intent has no client secret'
+      )
+    }
+
+    console.log(
+      'PAYMENT INTENT CLIENT SECRET:',
+      paymentIntent.client_secret
     )
 
     // ==================================================
@@ -485,7 +516,8 @@ export default async function handler(
     // ==================================================
 
     return res.status(200).json({
-      confirmationSecret,
+      clientSecret:
+        paymentIntent.client_secret,
 
       subscriptionId:
         subscription.id,
