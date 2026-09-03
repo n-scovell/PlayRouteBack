@@ -8,11 +8,12 @@ export const config = {
   },
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY!
+)
 
 async function getRawBody(req: any): Promise<Buffer> {
   const chunks: Buffer[] = []
-
   for await (const chunk of req) {
     chunks.push(
       Buffer.isBuffer(chunk)
@@ -20,146 +21,189 @@ async function getRawBody(req: any): Promise<Buffer> {
         : Buffer.from(chunk)
     )
   }
-
   return Buffer.concat(chunks)
 }
 
 export default async function handler(req: any, res: any) {
-
-  console.log(
-    'STRIPE REQUEST:',
-    req.method,
-    req.headers.origin
-  )
-  // CORS MUST happen first
+  console.log('STRIPE REQUEST:', req.method, req.headers.origin)
   setCorsHeaders(res)
-
-  // Handle browser preflight BEFORE reading the body
   if (req.method === 'OPTIONS') {
     return res.status(204).end()
   }
-
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'Method not allowed',
     })
   }
-
   try {
-
     const rawBody = await getRawBody(req)
-
     const signature = req.headers['stripe-signature']
-
-    // --------------------------------
-    // STRIPE WEBHOOK
-    // --------------------------------
-
     if (signature) {
-
-      const event = stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
-      )
-
+      const event =
+        stripe.webhooks.constructEvent(
+          rawBody,
+          signature,
+          process.env.STRIPE_WEBHOOK_SECRET!
+        )
       console.log('STRIPE EVENT:', event.type)
+      if (event.type === 'invoice.paid') {
+        const invoice = event.data.object as Stripe.Invoice
+        const subscription = invoice.parent?.subscription_details?.subscription
+        const subscriptionId =
+          typeof subscription === 'string'
+            ? subscription
+            : subscription?.id
+        if (!subscriptionId) {
+          throw new Error(
+            'Missing subscription ID'
+          )
+        }
 
-      if (event.type === 'checkout.session.completed') {
-
-      const session =
-        event.data.object as Stripe.Checkout.Session
-
-      const userId = session.metadata?.userId
-      const plan = session.metadata?.plan
-
-      const customerId =
-        typeof session.customer === 'string'
-          ? session.customer
-          : session.customer?.id
-
-      const subscriptionId =
-        typeof session.subscription === 'string'
-          ? session.subscription
-          : session.subscription?.id
-
-      console.log('CHECKOUT COMPLETED:', session.id)
-      console.log('CUSTOMER:', customerId)
-      console.log('EMAIL:', session.customer_details?.email)
-      console.log('USER ID:', userId)
-      console.log('PLAN:', plan)
-      console.log('SUBSCRIPTION:', subscriptionId)
-
-      if (!userId || !plan) {
-        throw new Error(
-          'Missing userId or plan in Stripe metadata'
+        const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId)
+        const userId = subscriptionData.metadata?.userId
+        const plan = subscriptionData.metadata?.plan
+        const customerId =
+          typeof subscriptionData.customer === 'string'
+            ? subscriptionData.customer
+            : subscriptionData.customer?.id
+        console.log('INVOICE PAID:', invoice.id)
+        console.log('USER ID:', userId)
+        console.log('PLAN:', plan)
+        console.log('CUSTOMER:', customerId)
+        console.log('SUBSCRIPTION:', subscriptionId)
+        if (!userId || !plan) {
+          throw new Error('Missing userId or plan in subscription metadata')
+        }
+        if (!customerId) {
+          throw new Error('Missing Stripe customer')
+        }
+        await prisma.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            plan: plan as 'COACH' | 'TEAM',
+            subscriptionStatus: 'ACTIVE',
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: subscriptionId,
+          },
+        })
+        const amounts = {
+          COACH: 600,
+          TEAM: 1000,
+        }
+        const amount = amounts[plan as keyof typeof amounts]
+        const existingPayment =
+          await prisma.payment.findFirst({
+            where: {
+              stripePaymentId:
+                invoice.id,
+            },
+          })
+        if (!existingPayment) {
+          await prisma.payment.create({
+            data: {
+              userId,
+              amount,
+              plan:
+                plan as 'COACH' | 'TEAM',
+              status: 'PAID',
+              stripePaymentId:
+                invoice.id,
+              paidAt: new Date(),
+            },
+          })
+        }
+        console.log(
+          'PLAYER ROUTES ACCOUNT ACTIVATED'
         )
       }
 
-      if (!customerId || !subscriptionId) {
-        throw new Error(
-          'Missing Stripe customer or subscription'
-        )
+      // ==================================================
+      // PAYMENT FAILED
+      // ==================================================
+
+      if (event.type === 'invoice.payment_failed') {
+        const invoice = event.data.object as Stripe.Invoice
+        const subscription = invoice.parent?.subscription_details?.subscription
+        const subscriptionId =
+          typeof subscription === 'string'
+            ? subscription
+            : subscription?.id
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+          const userId = subscription.metadata?.userId
+          if (userId) {
+            await prisma.user.update({
+              where: {
+                id: userId,
+              },
+              data: {
+                subscriptionStatus: 'PAST_DUE',
+              },
+            })
+          }
+        }
+        console.log('STRIPE PAYMENT FAILED:', invoice.id)
       }
 
-      // Update Player Routes user
-      await prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          plan: plan as 'COACH' | 'TEAM',
-          subscriptionStatus: 'ACTIVE',
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscriptionId
+      // ==================================================
+      // SUBSCRIPTION CANCELLED
+      // ==================================================
+
+      if ( event.type ==='customer.subscription.deleted') {
+        const subscription = event.data.object as Stripe.Subscription
+        const userId = subscription.metadata?.userId
+        if (userId) {
+          await prisma.user.update({
+            where: {
+              id: userId,
+            },
+            data: {
+              subscriptionStatus:
+                'CANCELED',
+            },
+          })
         }
-      })
-      const amounts = {
-        COACH: 600,
-        TEAM: 1000,
+        console.log('SUBSCRIPTION CANCELLED:', subscription.id)
       }
-      // Create payment record
-      await prisma.payment.create({
-        data: {
-          userId,
-          amount: amounts[plan as keyof typeof amounts],
-          plan: plan as 'COACH' | 'TEAM',
-          status: 'PAID',
-          stripePaymentId: session.id,
-          paidAt: new Date()
-        }
-      })
-
-      console.log('SO COOL! PLAYER ROUTES ACCOUNT ACTIVATED')
-    }
-
       return res.status(200).json({
         received: true,
       })
     }
 
+    // ==================================================
+    // FRONTEND REQUEST
+    // ==================================================
+
+    const body = JSON.parse(
+      rawBody.toString()
+    )
+
     // --------------------------------
-    // CREATE CHECKOUT
+    // CREATE SUBSCRIPTION
     // --------------------------------
 
-    const body = JSON.parse(rawBody.toString())
-
-    if (body.action !== 'create-checkout') {
+    if (body.action !== 'create-subscription') {
       return res.status(400).json({
-        error: 'Invalid action',
+        error: 'Invalid action for creating subscription',
       })
     }
+    const {userId,plan,} = body
 
-    const {
-      userId,
-      plan,
-    } = body
-
+    // --------------------------------
+    // Validate user
+    // --------------------------------
     if (!userId || !plan) {
       return res.status(400).json({
-        error: 'User ID and plan are required',
+        error:
+          'User ID and plan are required',
       })
     }
+
+    // --------------------------------
+    // Validate plan
+    // --------------------------------
 
     if (!['COACH', 'TEAM'].includes(plan)) {
       return res.status(400).json({
@@ -167,55 +211,142 @@ export default async function handler(req: any, res: any) {
       })
     }
 
+    // ==================================================
+    // GET STRIPE PRICE
+    // ==================================================
+
     const prices = {
-      COACH: process.env.STRIPE_COACH_PRICE_ID!,
-      TEAM: process.env.STRIPE_TEAM_PRICE_ID!,
+      COACH:
+        process.env.STRIPE_COACH_PRICE_ID!,
+
+      TEAM:
+        process.env.STRIPE_TEAM_PRICE_ID!,
     }
-    const priceId = prices[plan as keyof typeof prices]
+
+    const priceId =
+      prices[
+        plan as keyof typeof prices
+      ]
 
     if (!priceId) {
       return res.status(500).json({
-        error: `Stripe ${plan} price is not configured`,
+        error:
+          `Stripe ${plan} price is not configured`,
       })
     }
 
-    const session =
-      await stripe.checkout.sessions.create({
+    // ==================================================
+    // CREATE CUSTOMER
+    // ==================================================
 
-        mode: 'subscription',
+    const customer =
+      await stripe.customers.create({
+        metadata: {
+          userId,
+        },
+      })
 
-        line_items: [
+    console.log('STRIPE CUSTOMER CREATED:', customer.id)
+
+    // ==================================================
+    // CREATE SUBSCRIPTION
+    // ==================================================
+
+    const subscription =
+      await stripe.subscriptions.create({
+        customer: customer.id,
+
+        items: [
           {
             price: priceId,
             quantity: 1,
           },
         ],
 
+        payment_behavior:
+          'default_incomplete',
+
+        payment_settings: {
+          save_default_payment_method:
+            'on_subscription',
+        },
+
         metadata: {
           userId,
           plan,
         },
 
-        success_url:
-          'https://playerroutes.com/register?payment=success',
-
-        cancel_url:
-          'https://playerroutes.com/register?payment=cancelled',
+        expand: ['latest_invoice',],
       })
 
+    console.log(
+      'STRIPE SUBSCRIPTION CREATED:',
+      subscription.id
+    )
+
+    // ==================================================
+    // GET PAYMENT INTENT
+    // ==================================================
+
+    const invoice = subscription.latest_invoice
+    if (!invoice || typeof invoice === 'string') {
+      throw new Error(
+        'Stripe did not return the subscription invoice'
+      )
+    }
+    const payment = invoice.payments?.data?.[0]
+    if (!payment) {
+      throw new Error(
+        'Stripe did not return an invoice payment'
+      )
+    }
+    const paymentIntentId = payment.payment.payment_intent
+
+    if (
+      !paymentIntentId ||
+      typeof paymentIntentId !== 'string'
+    ) {
+      throw new Error(
+        'Stripe did not return a payment intent'
+      )
+    }
+
+    const paymentIntent =
+      await stripe.paymentIntents.retrieve(
+        paymentIntentId
+      )
+
+    if (!paymentIntent.client_secret) {
+      throw new Error(
+        'Stripe payment intent has no client secret'
+      )
+    }
+
+    // ==================================================
+    // RETURN PAYMENT ELEMENT DATA
+    // ==================================================
+
     return res.status(200).json({
-      url: session.url,
+      clientSecret:
+        paymentIntent.client_secret,
+
+      subscriptionId:
+        subscription.id,
+
+      customerId:
+        customer.id,
     })
 
   } catch (err: any) {
-
     console.error(
       'STRIPE ERROR:',
-      err.message
+      err
     )
 
     return res.status(400).json({
-      error: err.message || 'Stripe request failed',
+      error:
+        err.message ||
+        'Stripe request failed',
     })
   }
 }
