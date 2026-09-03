@@ -14,6 +14,7 @@ const stripe = new Stripe(
 
 async function getRawBody(req: any): Promise<Buffer> {
   const chunks: Buffer[] = []
+
   for await (const chunk of req) {
     chunks.push(
       Buffer.isBuffer(chunk)
@@ -21,23 +22,42 @@ async function getRawBody(req: any): Promise<Buffer> {
         : Buffer.from(chunk)
     )
   }
+
   return Buffer.concat(chunks)
 }
 
-export default async function handler(req: any, res: any) {
-  console.log('STRIPE REQUEST:', req.method, req.headers.origin)
+export default async function handler(
+  req: any,
+  res: any
+) {
+  console.log(
+    'STRIPE REQUEST:',
+    req.method,
+    req.headers.origin
+  )
+
   setCorsHeaders(res)
+
   if (req.method === 'OPTIONS') {
     return res.status(204).end()
   }
+
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'Method not allowed',
     })
   }
+
   try {
     const rawBody = await getRawBody(req)
-    const signature = req.headers['stripe-signature']
+
+    // ==================================================
+    // STRIPE WEBHOOK
+    // ==================================================
+
+    const signature =
+      req.headers['stripe-signature']
+
     if (signature) {
       const event =
         stripe.webhooks.constructEvent(
@@ -45,54 +65,127 @@ export default async function handler(req: any, res: any) {
           signature,
           process.env.STRIPE_WEBHOOK_SECRET!
         )
-      console.log('STRIPE EVENT:', event.type)
+
+      console.log(
+        'STRIPE EVENT:',
+        event.type
+      )
+
+      // ==================================================
+      // PAYMENT SUCCESSFUL
+      // ==================================================
+
       if (event.type === 'invoice.paid') {
-        const invoice = event.data.object as Stripe.Invoice
-        const subscription = invoice.parent?.subscription_details?.subscription
+        const invoice =
+          event.data.object as Stripe.Invoice
+
+        const subscription =
+          invoice.parent
+            ?.subscription_details
+            ?.subscription
+
         const subscriptionId =
           typeof subscription === 'string'
             ? subscription
             : subscription?.id
+
         if (!subscriptionId) {
           throw new Error(
             'Missing subscription ID'
           )
         }
 
-        const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId)
-        const userId = subscriptionData.metadata?.userId
-        const plan = subscriptionData.metadata?.plan
+        const subscriptionData =
+          await stripe.subscriptions.retrieve(
+            subscriptionId
+          )
+
+        const userId =
+          subscriptionData.metadata?.userId
+
+        const plan =
+          subscriptionData.metadata?.plan
+
         const customerId =
-          typeof subscriptionData.customer === 'string'
+          typeof subscriptionData.customer ===
+          'string'
             ? subscriptionData.customer
             : subscriptionData.customer?.id
-        console.log('INVOICE PAID:', invoice.id)
-        console.log('USER ID:', userId)
-        console.log('PLAN:', plan)
-        console.log('CUSTOMER:', customerId)
-        console.log('SUBSCRIPTION:', subscriptionId)
+
+        console.log(
+          'INVOICE PAID:',
+          invoice.id
+        )
+
+        console.log(
+          'USER ID:',
+          userId
+        )
+
+        console.log(
+          'PLAN:',
+          plan
+        )
+
+        console.log(
+          'CUSTOMER:',
+          customerId
+        )
+
+        console.log(
+          'SUBSCRIPTION:',
+          subscriptionId
+        )
+
         if (!userId || !plan) {
-          throw new Error('Missing userId or plan in subscription metadata')
+          throw new Error(
+            'Missing userId or plan in subscription metadata'
+          )
         }
+
         if (!customerId) {
-          throw new Error('Missing Stripe customer')
+          throw new Error(
+            'Missing Stripe customer'
+          )
         }
+
+        // -----------------------------------------------
+        // ACTIVATE USER
+        // -----------------------------------------------
+
         await prisma.user.update({
           where: {
             id: userId,
           },
           data: {
-            plan: plan as 'COACH' | 'TEAM',
-            subscriptionStatus: 'ACTIVE',
-            stripeCustomerId: customerId,
-            stripeSubscriptionId: subscriptionId,
+            plan:
+              plan as 'COACH' | 'TEAM',
+
+            subscriptionStatus:
+              'ACTIVE',
+
+            stripeCustomerId:
+              customerId,
+
+            stripeSubscriptionId:
+              subscriptionId,
           },
         })
+
+        // -----------------------------------------------
+        // RECORD PAYMENT
+        // -----------------------------------------------
+
         const amounts = {
           COACH: 600,
           TEAM: 1000,
         }
-        const amount = amounts[plan as keyof typeof amounts]
+
+        const amount =
+          amounts[
+            plan as keyof typeof amounts
+          ]
+
         const existingPayment =
           await prisma.payment.findFirst({
             where: {
@@ -100,20 +193,27 @@ export default async function handler(req: any, res: any) {
                 invoice.id,
             },
           })
+
         if (!existingPayment) {
           await prisma.payment.create({
             data: {
               userId,
+
               amount,
+
               plan:
                 plan as 'COACH' | 'TEAM',
+
               status: 'PAID',
+
               stripePaymentId:
                 invoice.id,
+
               paidAt: new Date(),
             },
           })
         }
+
         console.log(
           'PLAYER ROUTES ACCOUNT ACTIVATED'
         )
@@ -123,37 +223,65 @@ export default async function handler(req: any, res: any) {
       // PAYMENT FAILED
       // ==================================================
 
-      if (event.type === 'invoice.payment_failed') {
-        const invoice = event.data.object as Stripe.Invoice
-        const subscription = invoice.parent?.subscription_details?.subscription
+      if (
+        event.type ===
+        'invoice.payment_failed'
+      ) {
+        const invoice =
+          event.data.object as Stripe.Invoice
+
+        const subscription =
+          invoice.parent
+            ?.subscription_details
+            ?.subscription
+
         const subscriptionId =
           typeof subscription === 'string'
             ? subscription
             : subscription?.id
+
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-          const userId = subscription.metadata?.userId
+          const subscriptionData =
+            await stripe.subscriptions.retrieve(
+              subscriptionId
+            )
+
+          const userId =
+            subscriptionData.metadata?.userId
+
           if (userId) {
             await prisma.user.update({
               where: {
                 id: userId,
               },
               data: {
-                subscriptionStatus: 'PAST_DUE',
+                subscriptionStatus:
+                  'PAST_DUE',
               },
             })
           }
         }
-        console.log('STRIPE PAYMENT FAILED:', invoice.id)
+
+        console.log(
+          'STRIPE PAYMENT FAILED:',
+          invoice.id
+        )
       }
 
       // ==================================================
       // SUBSCRIPTION CANCELLED
       // ==================================================
 
-      if ( event.type ==='customer.subscription.deleted') {
-        const subscription = event.data.object as Stripe.Subscription
-        const userId = subscription.metadata?.userId
+      if (
+        event.type ===
+        'customer.subscription.deleted'
+      ) {
+        const subscription =
+          event.data.object as Stripe.Subscription
+
+        const userId =
+          subscription.metadata?.userId
+
         if (userId) {
           await prisma.user.update({
             where: {
@@ -165,8 +293,13 @@ export default async function handler(req: any, res: any) {
             },
           })
         }
-        console.log('SUBSCRIPTION CANCELLED:', subscription.id)
+
+        console.log(
+          'SUBSCRIPTION CANCELLED:',
+          subscription.id
+        )
       }
+
       return res.status(200).json({
         received: true,
       })
@@ -180,20 +313,29 @@ export default async function handler(req: any, res: any) {
       rawBody.toString()
     )
 
-    // --------------------------------
+    // ==================================================
     // CREATE SUBSCRIPTION
-    // --------------------------------
+    // ==================================================
 
-    if (body.action !== 'create-subscription') {
+    if (
+      body.action !==
+      'create-subscription'
+    ) {
       return res.status(400).json({
-        error: 'Invalid action for creating subscription',
+        error:
+          'Invalid action for creating subscription',
       })
     }
-    const {userId,plan,} = body
 
-    // --------------------------------
-    // Validate user
-    // --------------------------------
+    const {
+      userId,
+      plan,
+    } = body
+
+    // ==================================================
+    // VALIDATE USER
+    // ==================================================
+
     if (!userId || !plan) {
       return res.status(400).json({
         error:
@@ -201,11 +343,13 @@ export default async function handler(req: any, res: any) {
       })
     }
 
-    // --------------------------------
-    // Validate plan
-    // --------------------------------
+    // ==================================================
+    // VALIDATE PLAN
+    // ==================================================
 
-    if (!['COACH', 'TEAM'].includes(plan)) {
+    if (
+      !['COACH', 'TEAM'].includes(plan)
+    ) {
       return res.status(400).json({
         error: 'Invalid plan',
       })
@@ -246,7 +390,10 @@ export default async function handler(req: any, res: any) {
         },
       })
 
-    console.log('STRIPE CUSTOMER CREATED:', customer.id)
+    console.log(
+      'STRIPE CUSTOMER CREATED:',
+      customer.id
+    )
 
     // ==================================================
     // CREATE SUBSCRIPTION
@@ -276,7 +423,9 @@ export default async function handler(req: any, res: any) {
           plan,
         },
 
-        expand: ['latest_invoice',],
+        expand: [
+          'latest_invoice.confirmation_secret',
+        ],
       })
 
     console.log(
@@ -285,51 +434,58 @@ export default async function handler(req: any, res: any) {
     )
 
     // ==================================================
-    // GET PAYMENT INTENT
+    // GET INVOICE
     // ==================================================
 
-    const invoice = subscription.latest_invoice
-    console.log('STRIPE INVOICE:',JSON.stringify(invoice, null, 2))
-    if (!invoice || typeof invoice === 'string') {
+    const invoice =
+      subscription.latest_invoice
+
+    if (
+      !invoice ||
+      typeof invoice === 'string'
+    ) {
       throw new Error(
         'Stripe did not return the subscription invoice'
       )
     }
-    const payment = invoice.payments?.data?.[0]
-    if (!payment) {
-      throw new Error(
-        'Stripe did not return an invoice payment'
-      )
-    }
-    const paymentIntentId = payment.payment.payment_intent
 
-    if (
-      !paymentIntentId ||
-      typeof paymentIntentId !== 'string'
-    ) {
-      throw new Error(
-        'Stripe did not return a payment intent'
+    console.log(
+      'STRIPE INVOICE:',
+      JSON.stringify(
+        invoice,
+        null,
+        2
       )
-    }
-
-    const paymentIntent =
-      await stripe.paymentIntents.retrieve(
-        paymentIntentId
-      )
-
-    if (!paymentIntent.client_secret) {
-      throw new Error(
-        'Stripe payment intent has no client secret'
-      )
-    }
+    )
 
     // ==================================================
-    // RETURN PAYMENT ELEMENT DATA
+    // GET CONFIRMATION SECRET
+    // ==================================================
+
+    const confirmationSecret =
+      invoice.confirmation_secret
+
+    if (!confirmationSecret) {
+      throw new Error(
+        'Stripe did not return a confirmation secret'
+      )
+    }
+
+    console.log(
+      'CONFIRMATION SECRET:',
+      JSON.stringify(
+        confirmationSecret,
+        null,
+        2
+      )
+    )
+
+    // ==================================================
+    // RETURN PAYMENT DATA
     // ==================================================
 
     return res.status(200).json({
-      clientSecret:
-        paymentIntent.client_secret,
+      confirmationSecret,
 
       subscriptionId:
         subscription.id,
