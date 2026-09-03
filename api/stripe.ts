@@ -289,6 +289,7 @@ export default async function handler(req: any, res: any) {
     // ==================================================
 
     const invoice = subscription.latest_invoice
+    console.log('STRIPE INVOICE:',JSON.stringify(invoice, null, 2))
     if (!invoice || typeof invoice === 'string') {
       throw new Error(
         'Stripe did not return the subscription invoice'
