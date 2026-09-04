@@ -11,10 +11,8 @@ export const config = {
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY!
 )
-
 async function getRawBody(req: any): Promise<Buffer> {
   const chunks: Buffer[] = []
-
   for await (const chunk of req) {
     chunks.push(
       Buffer.isBuffer(chunk)
@@ -22,7 +20,6 @@ async function getRawBody(req: any): Promise<Buffer> {
         : Buffer.from(chunk)
     )
   }
-
   return Buffer.concat(chunks)
 }
 
