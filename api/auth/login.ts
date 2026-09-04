@@ -23,39 +23,32 @@ export default async function handler(req: any, res: any) {
   if (action === 'login') {
 
     try {
-
       const { email, password } = req.body
-
       const result = await userService.login(email, password)
-
       return res.status(200).json(result)
-
     } catch (err: any) {
-
-      console.error('LOGIN ERROR:', err)
-
+      if (err.message === 'PAYMENT_REQUIRED') {
+        return res.status(402).json({
+          error: 'PAYMENT_REQUIRED',
+          message: 'Please complete your subscription.'
+        })
+      }
       return res.status(401).json({
-        error: err.message || 'Invalid credentials',
+        error: 'INVALID_CREDENTIALS',
+        message: 'Invalid credentials'
       })
     }
   }
-
   if (action === 'change-password') {
-
   try {
-
     const authHeader = req.headers.authorization
-
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'Authentication required',
       })
     }
-
     const token = authHeader.split(' ')[1]
-
     let decoded: any
-
     try {
       decoded = jwt.verify(token, JWT_SECRET)
     } catch {
@@ -63,7 +56,6 @@ export default async function handler(req: any, res: any) {
         error: 'Invalid or expired token',
       })
     }
-
     const {
       currentPassword,
       newPassword,

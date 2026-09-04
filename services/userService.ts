@@ -19,6 +19,11 @@ export const userService = {
     if (!validPassword) {
       throw new Error('Invalid credentials')
     }
+
+    if (user.plan !== 'FREE' && user.subscriptionStatus !== 'ACTIVE') {
+      throw new Error('PAYMENT_REQUIRED')
+    }
+    
     const token = jwt.sign(
       {userId: user.id,email: user.email,}, JWT_SECRET,
       {expiresIn: '7d',}
