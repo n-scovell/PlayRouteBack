@@ -21,7 +21,6 @@ export default async function handler(req: any, res: any) {
   const { action } = req.body
 
   if (action === 'login') {
-
     try {
       const { email, password } = req.body
       const result = await userService.login(email, password)
