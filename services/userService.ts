@@ -24,7 +24,7 @@ export const userService = {
       plan: user.plan,
       subscriptionStatus: user.subscriptionStatus,
     })
-    if (user.plan !== 'FREE' && user.subscriptionStatus !== 'ACTIVE') {
+    if (user.subscriptionStatus !== 'ACTIVE') {
       throw new Error('PAYMENT_REQUIRED')
     }
 
