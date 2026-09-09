@@ -9,8 +9,14 @@ export default async function handler(req: any, res: any) {
   }
 
   if (req.method === 'GET') {
-    const users = await userService.getUsers()
-    return res.status(200).json(users)
+    const { userId } = req.query
+    if (!userId) {
+      return res.status(400).json({
+        error: 'User ID is required'
+      })
+    }
+    const user = await userService.getUserById(userId)
+    return res.status(200).json(user)
   }
 
   if (req.method === 'PUT') {
