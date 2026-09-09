@@ -24,9 +24,9 @@ export const userService = {
       plan: user.plan,
       subscriptionStatus: user.subscriptionStatus,
     })
-    if (user.subscriptionStatus !== 'ACTIVE') {
-      throw new Error('PAYMENT_REQUIRED')
-    }
+    // if (user.subscriptionStatus !== 'ACTIVE') {
+    //   throw new Error('PAYMENT_REQUIRED')
+    // }
 
     const token = jwt.sign(
       {userId: user.id,email: user.email,}, JWT_SECRET,
