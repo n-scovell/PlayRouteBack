@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { setCorsHeaders } from '../_cors'
 import bcrypt from "bcryptjs"
+import jwt from 'jsonwebtoken'
 
 const prisma = new PrismaClient()
 
@@ -29,7 +30,7 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Verification already used' })
     }
     // 3. Check expiry
-    if (record.expiresAt < new Date()) {Verification
+    if (record.expiresAt < new Date()) {
       return res.status(400).json({ error: ' code expired' })
     }
     // 4. Check code match
@@ -39,6 +40,8 @@ export default async function handler(req: any, res: any) {
     // 5. Extract signup payload
     const { email: userEmail, password, teamPin, name, sport, team } =
       record.payload as any
+
+      
     // 6. hash password (NOW inside handler = correct)
     const hashedPassword = await bcrypt.hash(password, 10)
     const hashedPin = await bcrypt.hash(teamPin, 10)
@@ -54,6 +57,17 @@ export default async function handler(req: any, res: any) {
       },
     })
 
+    const token = jwt.sign(
+  {
+    userId: user.id,
+    email: user.email,
+  },
+  process.env.JWT_SECRET!,
+  {
+    expiresIn: '7d',
+  }
+)
+
     // 8. mark verification used
     await prisma.emailVerification.update({
       where: { email },
@@ -61,19 +75,19 @@ export default async function handler(req: any, res: any) {
     })
 
     return res.status(200).json({
-      success: true,
-      message: 'Account created successfully',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        sport: user.sport,
-        team: user.team,
-        plan: user.plan,
-        subscriptionStatus: user.subscriptionStatus,
-      },
-    })
-
+  success: true,
+  message: 'Account created successfully',
+  token,
+  user: {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    sport: user.sport,
+    team: user.team,
+    plan: user.plan,
+    subscriptionStatus: user.subscriptionStatus,
+  },
+})
   } catch (err) {
     console.error(err)
     return res.status(500).json({ error: 'Server error' })
