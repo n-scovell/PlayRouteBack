@@ -274,9 +274,9 @@ export default async function handler(req: any, res: any) {
       const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET!
-      ) as { id: string }
+      ) as { userId: string }
 
-      const userId = decoded.id
+      const userId = decoded.userId
 
       const user = await prisma.user.findUnique({
       where: {
