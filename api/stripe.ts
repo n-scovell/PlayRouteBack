@@ -296,7 +296,7 @@ export default async function handler(req: any, res: any) {
       const session =
       await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: 'https://playerroutes.com/account',
+      return_url: 'https://playerroutes.com/profile',
       })
 
       return res.status(200).json({
