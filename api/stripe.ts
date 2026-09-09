@@ -53,7 +53,28 @@ export default async function handler(req: any, res: any) {
       // ==================================================
       // PAYMENT SUCCESSFUL
       // ==================================================
-
+      if (event.type === 'customer.subscription.updated') {
+        const subscription = event.data.object
+        const customerId = subscription.customer as string
+        const priceId = subscription.items.data[0].price.id
+        let plan: 'COACH' | 'TEAM'
+        if (priceId === process.env.STRIPE_COACH_PRICE_ID) {
+        plan = 'COACH'
+        } else if (priceId === process.env.STRIPE_TEAM_PRICE_ID) {
+        plan = 'TEAM'
+        } else {
+        console.error('Unknown Stripe price:', priceId)
+        return
+        }
+        await prisma.user.update({
+        where: {
+        stripeCustomerId: customerId
+        },
+        data: {
+        plan
+        }
+        })
+      }
       if (event.type === 'invoice.paid') {
         const invoice =
           event.data.object as Stripe.Invoice
