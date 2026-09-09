@@ -57,6 +57,14 @@ export default async function handler(req: any, res: any) {
         const subscription = event.data.object
         const customerId = subscription.customer as string
         const priceId = subscription.items.data[0].price.id
+
+        console.log('SUBSCRIPTION UPDATED')
+        console.log('Customer:', customerId)
+        console.log('Price:', priceId)
+        console.log('Coach Price:', process.env.STRIPE_COACH_PRICE_ID)
+        console.log('Team Price:', process.env.STRIPE_TEAM_PRICE_ID)
+
+        
         let plan: 'COACH' | 'TEAM'
         if (priceId === process.env.STRIPE_COACH_PRICE_ID) {
         plan = 'COACH'
@@ -95,46 +103,13 @@ export default async function handler(req: any, res: any) {
           )
         }
 
-        const subscriptionData =
-          await stripe.subscriptions.retrieve(
-            subscriptionId
-          )
-
-        const userId =
-          subscriptionData.metadata?.userId
-
-        const plan =
-          subscriptionData.metadata?.plan
-
+        const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId)
+        const userId = subscriptionData.metadata?.userId
+        const plan = subscriptionData.metadata?.plan
         const customerId =
           typeof subscriptionData.customer === 'string'
             ? subscriptionData.customer
             : subscriptionData.customer?.id
-
-        // console.log(
-        //   'INVOICE PAID:',
-        //   invoice.id
-        // )
-
-        // console.log(
-        //   'USER ID:',
-        //   userId
-        // )
-
-        // console.log(
-        //   'PLAN:',
-        //   plan
-        // )
-
-        // console.log(
-        //   'CUSTOMER:',
-        //   customerId
-        // )
-
-        // console.log(
-        //   'SUBSCRIPTION:',
-        //   subscriptionId
-        // )
 
         if (!userId || !plan) {
           throw new Error(
