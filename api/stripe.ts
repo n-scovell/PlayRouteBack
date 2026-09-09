@@ -563,6 +563,8 @@ export default async function handler(req: any, res: any) {
 
       console.log('STRIPE EVENT:', event.type)
 
+
+
       // ==================================================
       // SUBSCRIPTION UPDATED
       // ==================================================
