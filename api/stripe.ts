@@ -13,7 +13,7 @@ const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY!
 )
 
-console.log('TEAM PRICE:', process.env.STRIPE_TEAM_PRICE_ID)
+
 
 async function getRawBody(req: any): Promise<Buffer> {
   const chunks: Buffer[] = []
@@ -30,6 +30,8 @@ async function getRawBody(req: any): Promise<Buffer> {
 }
 
 export default async function handler(req: any, res: any) {
+  console.log('COACH PRICE:', process.env.STRIPE_COACH_PRICE_ID)
+  console.log('TEAM PRICE:', process.env.STRIPE_TEAM_PRICE_ID)
   console.log(
     'STRIPE REQUEST:',
     req.method,
