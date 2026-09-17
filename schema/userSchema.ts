@@ -47,7 +47,13 @@ const userIdSchema = z
   // sport?: string
   // team?: string
 
-export const updateSchema = z.object({
+export const updatePasswordSchema = z.object({
+  id: z.string().min(1, 'User ID is required'),
+  action: z.literal('update-password'),
+  password: passwordSchema
+})
+
+  export const updateSchema = z.object({
   id: z.string().min(1, 'User ID is required s'),
   action: z.literal('update'),
   name: genericInput,

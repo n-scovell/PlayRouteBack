@@ -1,6 +1,6 @@
 import { userService } from '../services/userService'
 import { setCorsHeaders } from './_cors'
-import { loginSchema, playerLoginSchema, createUserSchema, updateSchema } from '../schema/userSchema'
+import { loginSchema, playerLoginSchema, createUserSchema, updateSchema, updatePasswordSchema } from '../schema/userSchema'
 
 export default async function handler(req: any, res: any) {
   setCorsHeaders(res)
@@ -15,18 +15,57 @@ export default async function handler(req: any, res: any) {
     const user = await userService.getUserById(userId)
     return res.status(200).json(user)
   }
+
   if (req.method === 'PUT') {
+
+  const { action } = req.body || {}
+
+  if (action === 'update') {
+
     const validation = updateSchema.safeParse(req.body)
+
     if (!validation.success) {
       return res.status(400).json({
         error: 'Invalid profile information',
         issues: validation.error.flatten().fieldErrors
       })
     }
+
     const { id, action, ...data } = validation.data
+
     const user = await userService.updateUser(id, data)
+
     return res.status(200).json(user)
   }
+
+  if (action === 'update-password') {
+
+    const validation = updatePasswordSchema.safeParse(req.body)
+
+    if (!validation.success) {
+      return res.status(400).json({
+        error: 'Invalid password information',
+        issues: validation.error.flatten().fieldErrors
+      })
+    }
+
+    const { id, action, password } = validation.data
+
+    const user = await userService.updateUser(id, {
+      password
+    })
+
+    return res.status(200).json(user)
+  }
+
+  return res.status(400).json({
+    error: 'Invalid update action'
+  })
+}
+
+
+
+
   if (req.method === 'POST') {
     try {
       const { action } = req.body || {}
