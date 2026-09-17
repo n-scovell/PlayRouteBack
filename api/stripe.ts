@@ -789,7 +789,7 @@ export default async function handler(req: any, res: any) {
         }
 
         console.log(
-          'PLAYER ROUTES PAYMENT RECORDED'
+          'PLAYER ROUTES PAYMENT RECORDED!'
         )
       }
 
