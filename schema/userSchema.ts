@@ -48,7 +48,7 @@ const userIdSchema = z
   // team?: string
 
 export const updateSchema = z.object({
-  id: z.string().min(1, 'User ID is required'),
+  id: z.string().min(1, 'User ID is required s'),
   action: z.literal('update'),
   name: genericInput,
   sport: genericInput,
