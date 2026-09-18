@@ -1,6 +1,6 @@
 import { userService } from '../services/userService'
 import { setCorsHeaders } from './_cors'
-import { loginSchema, playerLoginSchema, createUserSchema, updateSchema, updatePasswordSchema } from '../schema/userSchema'
+import { loginSchema, playerLoginSchema, createUserSchema, updateSchema, updatePasswordSchema, updatePinSchema } from '../schema/userSchema'
 
 export default async function handler(req: any, res: any) {
   setCorsHeaders(res)
@@ -38,6 +38,21 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json(user)
   }
 
+  if (action === 'update-pin') {
+    const validation = updatePinSchema.safeParse(req.body)
+    if (!validation.success) {
+      return res.status(400).json({
+        error: 'Invalid pin information',
+        issues: validation.error.flatten().fieldErrors
+      })
+    }
+    const { id, action, teamPin } = validation.data
+    const user = await userService.updateUser(id, {
+      teamPin
+    })
+    return res.status(200).json(user)
+  }
+
   if (action === 'update-password') {
 
     const validation = updatePasswordSchema.safeParse(req.body)
@@ -48,16 +63,12 @@ export default async function handler(req: any, res: any) {
         issues: validation.error.flatten().fieldErrors
       })
     }
-
     const { id, action, password } = validation.data
-
     const user = await userService.updateUser(id, {
       password
     })
-
     return res.status(200).json(user)
   }
-
   return res.status(400).json({
     error: 'Invalid update action'
   })

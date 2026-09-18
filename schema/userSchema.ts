@@ -47,9 +47,22 @@ const userIdSchema = z
   // sport?: string
   // team?: string
 
+export const updatePinSchema = z.object({
+  id: z.string().min(1, 'User ID is required'),
+  action: z.literal('update-pin'),
+  teamPin: teamPinSchema
+})
+
 export const updatePasswordSchema = z.object({
   id: z.string().min(1, 'User ID is required'),
   action: z.literal('update-password'),
+  password: passwordSchema
+})
+
+
+export const updatePin = z.object({
+  id: z.string().min(1, 'User ID is required'),
+  action: z.literal('update-pin'),
   password: passwordSchema
 })
 
